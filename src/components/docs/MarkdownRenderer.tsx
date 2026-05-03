@@ -1,24 +1,77 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-sql';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-lua';
 import { cn } from '@/lib/utils';
 import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+}
+
+type PrismModule = typeof import('prismjs');
+
+const normalizePrismLanguage = (language: string) => {
+  const normalized = language.toLowerCase();
+
+  if (normalized === 'js') return 'javascript';
+  if (normalized === 'ts') return 'typescript';
+  if (['shell', 'sh', 'zsh', 'terminal'].includes(normalized)) return 'bash';
+  if (normalized === 'py') return 'python';
+
+  return normalized;
+};
+
+let prismPromise: Promise<PrismModule> | null = null;
+const prismLanguagePromises = new Map<string, Promise<unknown>>();
+
+const loadPrismCore = () => {
+  prismPromise ??= import('prismjs');
+  return prismPromise;
+};
+
+const prismLanguageLoaders: Record<string, () => Promise<unknown>> = {
+  javascript: () => import('prismjs/components/prism-javascript'),
+  typescript: async () => {
+    await loadPrismLanguage('javascript');
+    return import('prismjs/components/prism-typescript');
+  },
+  jsx: async () => {
+    await loadPrismLanguage('javascript');
+    return import('prismjs/components/prism-jsx');
+  },
+  tsx: async () => {
+    await loadPrismLanguage('jsx');
+    await loadPrismLanguage('typescript');
+    return import('prismjs/components/prism-tsx');
+  },
+  bash: () => import('prismjs/components/prism-bash'),
+  json: () => import('prismjs/components/prism-json'),
+  css: () => import('prismjs/components/prism-css'),
+  sql: () => import('prismjs/components/prism-sql'),
+  python: () => import('prismjs/components/prism-python'),
+  lua: () => import('prismjs/components/prism-lua'),
+};
+
+async function loadPrismLanguage(language: string) {
+  await loadPrismCore();
+
+  const normalized = normalizePrismLanguage(language);
+  const loader = prismLanguageLoaders[normalized];
+
+  if (!loader) return;
+
+  if (!prismLanguagePromises.has(normalized)) {
+    prismLanguagePromises.set(normalized, loader());
+  }
+
+  await prismLanguagePromises.get(normalized);
+}
+
+async function loadPrism(language: string) {
+  const prism = await loadPrismCore();
+  await loadPrismLanguage(language);
+  return prism;
 }
 
 function CodeBlock({ className, children }: { className?: string; children: string }) {
@@ -29,10 +82,27 @@ function CodeBlock({ className, children }: { className?: string; children: stri
   const language = className?.replace('language-', '') || 'text';
   
   useEffect(() => {
-    if (codeRef.current) {
-      Prism.highlightElement(codeRef.current);
-    }
-  }, [children]);
+    let isActive = true;
+    const codeElement = codeRef.current;
+
+    if (!codeElement) return;
+
+    loadPrism(language)
+      .then((Prism) => {
+        if (isActive) {
+          Prism.highlightElement(codeElement);
+        }
+      })
+      .catch((error: unknown) => {
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load Prism language:', language, error);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [children, language]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(children);
