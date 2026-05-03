@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { DocSection, DocsSidebar } from './DocsSidebar';
-import { cn } from '@/lib/utils';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { DocsSidebar } from './DocsSidebar';
+import type { DocSection } from '@/content/docs/navigation';
+import { useLanguage } from '@/i18n/useLanguage';
 
 interface DocsMobileNavProps {
   sections: DocSection[];

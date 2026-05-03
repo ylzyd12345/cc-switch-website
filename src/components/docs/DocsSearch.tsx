@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, ArrowRight, Command } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getDocSections } from './DocsSidebar';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { getDocSections } from '@/content/docs/navigation';
+import { useLanguage } from '@/i18n/useLanguage';
 
 interface SearchResult {
   sectionId: string;

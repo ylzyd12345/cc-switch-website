@@ -2,15 +2,22 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SiteNavbar } from '@/components/ccswitch/SiteNavbar';
-import { DocsSidebar, getDocSections } from '@/components/docs/DocsSidebar';
+import { DocsSidebar } from '@/components/docs/DocsSidebar';
 import { DocsMobileNav } from '@/components/docs/DocsMobileNav';
 import { MarkdownRenderer } from '@/components/docs/MarkdownRenderer';
 import { DocsSearch } from '@/components/docs/DocsSearch';
 import { TableOfContents } from '@/components/docs/TableOfContents';
-import { fetchDocContent, getDocContent } from '@/content/docs';
+import { fetchDocContent } from '@/content/docs';
+import { getDocSections } from '@/content/docs/navigation';
 import { SiteFooter } from '@/components/ccswitch/SiteFooter';
 import { ChevronLeft, ChevronRight, Edit, Clock, Search } from 'lucide-react';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
+
+type FlattenedDocNavItem = {
+  sectionId: string;
+  itemId?: string;
+  title: string;
+};
 
 export default function DocsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,16 +66,15 @@ export default function DocsPage() {
     setActiveItem(itemId);
   }, []);
 
-  // Find current position for prev/next navigation
-  const flattenedNav = docSections.flatMap(section => {
-    const items = [{ sectionId: section.id, itemId: undefined, title: section.title }];
-    if (section.items) {
-      section.items.forEach(item => {
+  const flattenedNav = useMemo<FlattenedDocNavItem[]>(() => (
+    docSections.flatMap((section) => {
+      const items: FlattenedDocNavItem[] = [{ sectionId: section.id, title: section.title }];
+      section.items?.forEach((item) => {
         items.push({ sectionId: section.id, itemId: item.id, title: item.title });
       });
-    }
-    return items;
-  });
+      return items;
+    })
+  ), [docSections]);
 
   const currentIndex = flattenedNav.findIndex(
     nav => nav.sectionId === activeSection && nav.itemId === activeItem

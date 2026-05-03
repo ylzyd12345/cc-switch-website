@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 
 const avatarStyles = [
   { avatar: '愚', avatarBg: 'bg-blue-500' },

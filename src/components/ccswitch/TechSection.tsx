@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { Check, Database, Code, TestTube } from 'lucide-react';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { Database, Code, TestTube } from 'lucide-react';
+import { useLanguage } from '@/i18n/useLanguage';
 
 const techIcons = [Database, Code, TestTube];
 const techColors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500'];
@@ -81,7 +81,7 @@ export function TechSection() {
                   className="flex gap-4"
                 >
                   <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${color} text-white flex items-center justify-center`}>
-                    <Check className="w-6 h-6" />
+                    <Icon className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">

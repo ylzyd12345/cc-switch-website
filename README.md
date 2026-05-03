@@ -23,6 +23,9 @@ npm run dev
 
 # 构建生产版本
 npm run build
+
+# 运行完整质量检查
+npm run check
 ```
 
 ## 项目结构
@@ -31,10 +34,12 @@ npm run build
 src/
 ├── components/     # 组件
 │   ├── ccswitch/   # CC Switch 专用组件
+│   │   └── demo/   # 首页交互演示面板
 │   ├── docs/       # 文档相关组件
 │   └── ui/         # shadcn/ui 组件
-├── content/        # 文档内容
+├── content/        # 文档导航、示例数据和内容加载
 ├── i18n/           # 国际化
+├── lib/            # 通用解析与工具函数
 ├── pages/          # 页面
 └── hooks/          # 自定义 Hooks
 public/

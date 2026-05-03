@@ -1,31 +1,42 @@
 import { Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 import ccSwitchLogo from '@/assets/cc-switch-logo.png';
 
 const socialLinks = [
   { label: 'GitHub', href: 'https://github.com/farion1231/cc-switch', icon: Github },
 ];
 
+type FooterLink = {
+  label: string;
+  href: string;
+  internal?: boolean;
+};
+
+type FooterSection = {
+  title: string;
+  links: FooterLink[];
+};
+
 export function SiteFooter() {
   const { t } = useLanguage();
 
-  const footerLinks = {
-    product: {
+  const footerSections: FooterSection[] = [
+    {
       title: t.footer.product.title,
       links: [
         { label: t.footer.product.features, href: '/#features', internal: true },
         { label: t.footer.product.download, href: 'https://github.com/farion1231/cc-switch/releases' },
       ],
     },
-    resources: {
+    {
       title: t.footer.resources.title,
       links: [
         { label: t.footer.resources.docs, href: '/docs', internal: true },
         { label: t.footer.resources.changelog, href: '/changelog', internal: true },
       ],
     },
-    community: {
+    {
       title: t.footer.community.title,
       links: [
         { label: t.footer.community.github, href: 'https://github.com/farion1231/cc-switch' },
@@ -33,7 +44,7 @@ export function SiteFooter() {
         { label: t.footer.community.issues, href: 'https://github.com/farion1231/cc-switch/issues' },
       ],
     },
-  };
+  ];
 
   return (
     <footer className="bg-card dark:bg-background border-t border-border py-16 md:py-20">
@@ -67,7 +78,7 @@ export function SiteFooter() {
           </div>
 
           {/* Links */}
-          {Object.values(footerLinks).map((section) => (
+          {footerSections.map((section) => (
             <div key={section.title}>
               <h4 className="font-semibold text-foreground mb-4">{section.title}</h4>
               <ul className="space-y-3">

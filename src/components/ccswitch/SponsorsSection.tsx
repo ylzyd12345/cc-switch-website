@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 
 // Import the same icons as ProviderCard
 import packyCodeIcon from '@/assets/icons/packycode.svg';

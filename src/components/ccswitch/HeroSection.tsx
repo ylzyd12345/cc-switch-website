@@ -2,9 +2,9 @@ import { motion } from 'framer-motion';
 import { Download, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 import ccSwitchLogo from '@/assets/cc-switch-logo.png';
-import { ProviderContent } from './DemoSection';
+import { ProviderContent } from './demo/ProviderDemo';
 import { useGitHubStats } from '@/hooks/useGitHubStars';
 
 function AppPreview() {
@@ -19,7 +19,6 @@ function AppPreview() {
         </div>
       </div>
 
-      {/* Reuse ProviderContent from DemoSection */}
       <ProviderContent />
     </div>
   );

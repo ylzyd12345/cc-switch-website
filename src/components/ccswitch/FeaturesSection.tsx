@@ -11,7 +11,7 @@ import {
   Terminal,
   type LucideIcon
 } from 'lucide-react';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 import { useGitHubStats } from '@/hooks/useGitHubStars';
 
 const featureIcons: LucideIcon[] = [Layers, Zap, DollarSign, Shield, Settings, GitBranch];

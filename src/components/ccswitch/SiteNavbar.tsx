@@ -4,7 +4,7 @@ import { Menu, X, Github, Download, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useLanguage } from '@/i18n/useLanguage';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import ccSwitchLogo from '@/assets/cc-switch-logo.png';
 

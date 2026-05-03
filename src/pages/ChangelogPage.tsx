@@ -5,19 +5,12 @@ import { cn } from '@/lib/utils';
 import { SiteNavbar } from '@/components/ccswitch/SiteNavbar';
 import { SiteFooter } from '@/components/ccswitch/SiteFooter';
 import { MarkdownRenderer } from '@/components/docs/MarkdownRenderer';
-import { useLanguage } from '@/i18n/LanguageContext';
-
-interface VersionEntry {
-  version: string;
-  date: string;
-  content: string;
-  isPreRelease: boolean;
-}
+import { getVersionTocItems, parseChangelog, stripChangelogVersionHeading } from '@/lib/changelog';
+import { useLanguage } from '@/i18n/useLanguage';
 
 export default function ChangelogPage() {
   const { t } = useLanguage();
   const [activeVersion, setActiveVersion] = useState<string>('');
-  const [expandedVersions, setExpandedVersions] = useState<string[]>([]);
   const [changelogMarkdown, setChangelogMarkdown] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -36,48 +29,18 @@ export default function ChangelogPage() {
       });
   }, []);
 
-  // Parse changelog into version entries
-  const versions = useMemo(() => {
-    if (!changelogMarkdown) return [];
-    const entries: VersionEntry[] = [];
-    // Match version headers like ## [3.9.0-1] - 2025-12-18
-    const versionRegex = /^## \[([^\]]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/gm;
-    const parts = changelogMarkdown.split(versionRegex);
-
-    // Skip the first part (content before first version)
-    for (let i = 1; i < parts.length; i += 3) {
-      const version = parts[i];
-      const date = parts[i + 1];
-      const content = parts[i + 2]?.trim() || '';
-      
-      if (version && date) {
-        entries.push({
-          version,
-          date,
-          content: `## [${version}] - ${date}\n\n${content}`,
-          isPreRelease: version.includes('-') || version.includes('beta') || version.includes('alpha'),
-        });
-      }
-    }
-
-    return entries;
-  }, [changelogMarkdown]);
+  const versions = useMemo(() => parseChangelog(changelogMarkdown), [changelogMarkdown]);
 
   // Set first version as active and expanded by default
   useEffect(() => {
     if (versions.length > 0 && !activeVersion) {
       setActiveVersion(versions[0].version);
-      setExpandedVersions([versions[0].version]);
     }
   }, [versions, activeVersion]);
 
   const handleVersionClick = (version: string) => {
     setActiveVersion(version);
-    setExpandedVersions(prev => 
-      prev.includes(version) ? prev : [...prev, version]
-    );
-    
-    // Scroll to version section
+
     const element = document.getElementById(`version-${version}`);
     if (element) {
       const offset = 100;
@@ -210,7 +173,7 @@ export default function ChangelogPage() {
                         {/* Version Content */}
                         <div className="p-6">
                           <MarkdownRenderer 
-                            content={entry.content.replace(/^## \[[^\]]+\]\s*-\s*\d{4}-\d{2}-\d{2}\s*\n*/m, '')} 
+                            content={stripChangelogVersionHeading(entry.content)}
                             className="changelog-content"
                           />
                         </div>
@@ -316,33 +279,7 @@ export default function ChangelogPage() {
 
 // Simple TOC for version sections
 function VersionToc({ content }: { content: string }) {
-  const headings = useMemo(() => {
-    const regex = /^### (.+)$/gm;
-    const items: { text: string; id: string }[] = [];
-    // Common changelog section titles to exclude
-    const excludeList = [
-      'added', 'changed', 'fixed', 'removed', 'deprecated', 'security',
-      'improved', 'stats', 'technical', 'notes', 'dependencies',
-      'beta release', 'stable release', 'migration notes',
-      'new features', 'bug fixes', 'improvements', 'breaking changes',
-      'reverted', 'statistics', 'strategic positioning',
-    ];
-    let match;
-
-    while ((match = regex.exec(content)) !== null) {
-      const text = match[1].trim().replace(/^[✨🔧🐛📦⚠️🏗️🔄🛠️🧪📝🚀]+\s*/, '');
-      const lowerText = text.toLowerCase();
-      // Skip common section titles
-      if (excludeList.includes(lowerText)) continue;
-      const id = text
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-');
-      items.push({ text, id });
-    }
-
-    return items;
-  }, [content]);
+  const headings = useMemo(() => getVersionTocItems(content), [content]);
 
   if (headings.length === 0) return null;
 
