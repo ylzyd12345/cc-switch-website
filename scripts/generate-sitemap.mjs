@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-const siteUrl = (process.env.VITE_SITE_URL || 'https://ccswitch.ai').replace(/\/+$/, '');
+const siteUrl = (process.env.VITE_SITE_URL || 'https://ccswitch.io').replace(/\/+$/, '');
 
 function resolveLastmod() {
   if (process.env.SITEMAP_LASTMOD) return process.env.SITEMAP_LASTMOD;

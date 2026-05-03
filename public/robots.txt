@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ccswitch.ai/sitemap.xml
+Sitemap: https://ccswitch.io/sitemap.xml

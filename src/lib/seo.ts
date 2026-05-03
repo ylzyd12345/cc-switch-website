@@ -1,7 +1,7 @@
 import type { Language } from '@/i18n/translations';
 
 export const SITE_NAME = 'CC Switch';
-export const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://ccswitch.ai').replace(/\/+$/, '');
+export const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://ccswitch.io').replace(/\/+$/, '');
 export const GITHUB_REPO_URL = 'https://github.com/farion1231/cc-switch';
 export const RELEASES_URL = 'https://github.com/farion1231/cc-switch/releases';
 export const OG_IMAGE_PATH = '/og-image.png';
