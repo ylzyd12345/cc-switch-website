@@ -1,48 +1,71 @@
+import type { Language } from '@/i18n/translations';
+
 // Documentation file path mapping
 const docPathMap: Record<string, Record<string, string>> = {
   'getting-started': {
-    default: '/docs/1-getting-started/1.1-introduction.md',
-    introduction: '/docs/1-getting-started/1.1-introduction.md',
-    installation: '/docs/1-getting-started/1.2-installation.md',
-    interface: '/docs/1-getting-started/1.3-interface.md',
-    quickstart: '/docs/1-getting-started/1.4-quickstart.md',
-    settings: '/docs/1-getting-started/1.5-settings.md',
+    default: '1-getting-started/1.1-introduction.md',
+    introduction: '1-getting-started/1.1-introduction.md',
+    installation: '1-getting-started/1.2-installation.md',
+    interface: '1-getting-started/1.3-interface.md',
+    quickstart: '1-getting-started/1.4-quickstart.md',
+    settings: '1-getting-started/1.5-settings.md',
   },
   providers: {
-    default: '/docs/2-providers/2.1-add.md',
-    add: '/docs/2-providers/2.1-add.md',
-    switch: '/docs/2-providers/2.2-switch.md',
-    edit: '/docs/2-providers/2.3-edit.md',
-    'sort-duplicate': '/docs/2-providers/2.4-sort-duplicate.md',
-    'usage-query': '/docs/2-providers/2.5-usage-query.md',
+    default: '2-providers/2.1-add.md',
+    add: '2-providers/2.1-add.md',
+    switch: '2-providers/2.2-switch.md',
+    edit: '2-providers/2.3-edit.md',
+    'sort-duplicate': '2-providers/2.4-sort-duplicate.md',
+    'usage-query': '2-providers/2.5-usage-query.md',
   },
   extensions: {
-    default: '/docs/3-extensions/3.1-mcp.md',
-    mcp: '/docs/3-extensions/3.1-mcp.md',
-    prompts: '/docs/3-extensions/3.2-prompts.md',
-    skills: '/docs/3-extensions/3.3-skills.md',
+    default: '3-extensions/3.1-mcp.md',
+    mcp: '3-extensions/3.1-mcp.md',
+    prompts: '3-extensions/3.2-prompts.md',
+    skills: '3-extensions/3.3-skills.md',
+    sessions: '3-extensions/3.4-sessions.md',
+    workspace: '3-extensions/3.5-workspace.md',
   },
   proxy: {
-    default: '/docs/4-proxy/4.1-service.md',
-    service: '/docs/4-proxy/4.1-service.md',
-    takeover: '/docs/4-proxy/4.2-takeover.md',
-    failover: '/docs/4-proxy/4.3-failover.md',
-    usage: '/docs/4-proxy/4.4-usage.md',
-    'model-test': '/docs/4-proxy/4.5-model-test.md',
+    default: '4-proxy/4.1-service.md',
+    service: '4-proxy/4.1-service.md',
+    routing: '4-proxy/4.2-routing.md',
+    takeover: '4-proxy/4.2-routing.md',
+    failover: '4-proxy/4.3-failover.md',
+    usage: '4-proxy/4.4-usage.md',
+    'model-test': '4-proxy/4.5-model-test.md',
   },
   faq: {
-    default: '/docs/5-faq/5.2-questions.md',
-    'config-files': '/docs/5-faq/5.1-config-files.md',
-    questions: '/docs/5-faq/5.2-questions.md',
-    deeplink: '/docs/5-faq/5.3-deeplink.md',
-    'env-conflict': '/docs/5-faq/5.4-env-conflict.md',
+    default: '5-faq/5.2-questions.md',
+    'config-files': '5-faq/5.1-config-files.md',
+    questions: '5-faq/5.2-questions.md',
+    deeplink: '5-faq/5.3-deeplink.md',
+    'env-conflict': '5-faq/5.4-env-conflict.md',
   },
 };
 
 // Cache for loaded documents
 const docCache: Record<string, string> = {};
 
-export function getDocFilePath(sectionId: string, itemId?: string): string | null {
+const docMessages: Record<Language, { notFound: string; loadFailed: string; loading: string }> = {
+  zh: {
+    notFound: '# 页面未找到\n\n请求的文档页面不存在。',
+    loadFailed: '# 加载失败\n\n无法加载文档内容，请稍后重试。',
+    loading: '# 加载中...\n\n正在加载文档内容...',
+  },
+  en: {
+    notFound: '# Page Not Found\n\nThe requested documentation page does not exist.',
+    loadFailed: '# Load Failed\n\nUnable to load the documentation. Please try again later.',
+    loading: '# Loading...\n\nLoading documentation content...',
+  },
+  ja: {
+    notFound: '# ページが見つかりません\n\n要求されたドキュメントページは存在しません。',
+    loadFailed: '# 読み込み失敗\n\nドキュメントを読み込めませんでした。しばらくしてからもう一度お試しください。',
+    loading: '# 読み込み中...\n\nドキュメントを読み込んでいます...',
+  },
+};
+
+function getDocRelativePath(sectionId: string, itemId?: string): string | null {
   const section = docPathMap[sectionId];
   if (!section) return null;
 
@@ -53,15 +76,41 @@ export function getDocFilePath(sectionId: string, itemId?: string): string | nul
   return section.default || null;
 }
 
-export async function fetchDocContent(sectionId: string, itemId?: string): Promise<string> {
-  const filePath = getDocFilePath(sectionId, itemId);
+export function getDocFilePath(language: Language, sectionId: string, itemId?: string): string | null {
+  const relativePath = getDocRelativePath(sectionId, itemId);
+  if (!relativePath) return null;
+
+  return `/docs/${language}/${relativePath}`;
+}
+
+export function getDocSourcePath(language: Language, sectionId: string, itemId?: string): string | null {
+  const relativePath = getDocRelativePath(sectionId, itemId);
+  if (!relativePath) return null;
+
+  return `docs/user-manual/${language}/${relativePath}`;
+}
+
+function processDocContent(content: string) {
+  return content
+    .replace(
+      /!\[([^\]]*)\]\(\.\.\/(?:\.\.\/)?assets\/([^)]+)\)/g,
+      '![$1](/docs/assets/$2)'
+    )
+    .replace(
+      /\]\(\.\.\/\.\.\/\.\.\/release-notes\/([^)]+)\)/g,
+      '](/docs/release-notes/$1)'
+    );
+}
+
+export async function fetchDocContent(language: Language, sectionId: string, itemId?: string): Promise<string> {
+  const filePath = getDocFilePath(language, sectionId, itemId);
 
   if (!filePath) {
-    return `# 页面未找到\n\n请求的文档页面不存在。`;
+    return docMessages[language].notFound;
   }
 
   // Check cache
-  const cacheKey = `${sectionId}-${itemId || 'default'}`;
+  const cacheKey = `${language}-${sectionId}-${itemId || 'default'}`;
   if (docCache[cacheKey]) {
     return docCache[cacheKey];
   }
@@ -72,12 +121,7 @@ export async function fetchDocContent(sectionId: string, itemId?: string): Promi
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const content = await response.text();
-
-    // Process image paths - convert relative paths to absolute
-    const processedContent = content.replace(
-      /!\[([^\]]*)\]\(\.\.\/assets\/([^)]+)\)/g,
-      '![$1](/docs/assets/$2)'
-    );
+    const processedContent = processDocContent(content);
 
     // Cache the result
     docCache[cacheKey] = processedContent;
@@ -85,15 +129,15 @@ export async function fetchDocContent(sectionId: string, itemId?: string): Promi
     return processedContent;
   } catch (error) {
     console.error('Failed to load document:', error);
-    return `# 加载失败\n\n无法加载文档内容，请稍后重试。`;
+    return docMessages[language].loadFailed;
   }
 }
 
 // Synchronous version for backward compatibility (returns placeholder)
-export function getDocContent(sectionId: string, itemId?: string): string {
-  const cacheKey = `${sectionId}-${itemId || 'default'}`;
+export function getDocContent(language: Language, sectionId: string, itemId?: string): string {
+  const cacheKey = `${language}-${sectionId}-${itemId || 'default'}`;
   if (docCache[cacheKey]) {
     return docCache[cacheKey];
   }
-  return '# 加载中...\n\n正在加载文档内容...';
+  return docMessages[language].loading;
 }

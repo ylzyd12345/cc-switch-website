@@ -7,7 +7,7 @@ import { DocsMobileNav } from '@/components/docs/DocsMobileNav';
 import { MarkdownRenderer } from '@/components/docs/MarkdownRenderer';
 import { DocsSearch } from '@/components/docs/DocsSearch';
 import { TableOfContents } from '@/components/docs/TableOfContents';
-import { fetchDocContent } from '@/content/docs';
+import { fetchDocContent, getDocSourcePath } from '@/content/docs';
 import { getDocSections } from '@/content/docs/navigation';
 import { SiteFooter } from '@/components/ccswitch/SiteFooter';
 import { ChevronLeft, ChevronRight, Edit, Clock, Search } from 'lucide-react';
@@ -26,12 +26,18 @@ export default function DocsPage() {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const docSections = useMemo(() => getDocSections(t), [t]);
 
   useEffect(() => {
+    if (activeSection === 'proxy' && activeItem === 'takeover') {
+      setActiveItem('routing');
+    }
+  }, [activeSection, activeItem]);
+
+  useEffect(() => {
     setIsLoading(true);
-    fetchDocContent(activeSection, activeItem).then((newContent) => {
+    fetchDocContent(language, activeSection, activeItem).then((newContent) => {
       setContent(newContent);
       setIsLoading(false);
     });
@@ -46,7 +52,7 @@ export default function DocsPage() {
 
     // Scroll to top
     window.scrollTo(0, 0);
-  }, [activeSection, activeItem, setSearchParams]);
+  }, [language, activeSection, activeItem, setSearchParams]);
 
   // Keyboard shortcut for search (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -81,6 +87,7 @@ export default function DocsPage() {
   );
   const prevNav = currentIndex > 0 ? flattenedNav[currentIndex - 1] : null;
   const nextNav = currentIndex < flattenedNav.length - 1 ? flattenedNav[currentIndex + 1] : null;
+  const editPath = getDocSourcePath(language, activeSection, activeItem);
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,7 +125,7 @@ export default function DocsPage() {
             {/* Main Content */}
             <main className="flex-1 min-w-0">
               <motion.article
-                key={`${activeSection}-${activeItem}`}
+                key={`${language}-${activeSection}-${activeItem}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -139,19 +146,21 @@ export default function DocsPage() {
                 <div className="border-t border-border pt-6 mt-8">
                   <div className="flex items-center justify-between text-sm text-muted-foreground mb-8">
                     <div className="flex items-center gap-4">
-                      <a
-                        href={`https://github.com/farion1231/cc-switch/edit/main/docs/${activeSection}/${activeItem || 'index'}.md`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        {t.docs.footer.edit}
-                      </a>
+                      {editPath && (
+                        <a
+                          href={`https://github.com/farion1231/cc-switch/edit/main/${editPath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          {t.docs.footer.edit}
+                        </a>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
-                      {t.docs.footer.lastUpdated.replace('{date}', 'Dec 2024')}
+                      {t.docs.footer.lastUpdated.replace('{date}', '2026-04-08')}
                     </div>
                   </div>
 

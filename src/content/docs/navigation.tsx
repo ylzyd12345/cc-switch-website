@@ -44,6 +44,8 @@ export const defaultDocSections: DocSection[] = [
       { id: 'mcp', title: 'MCP 服务器' },
       { id: 'prompts', title: 'Prompts 提示词' },
       { id: 'skills', title: 'Skills 技能' },
+      { id: 'sessions', title: '会话管理器' },
+      { id: 'workspace', title: '工作区与记忆' },
     ],
   },
   {
@@ -52,7 +54,7 @@ export const defaultDocSections: DocSection[] = [
     icon: <Server className="w-4 h-4" />,
     items: [
       { id: 'service', title: '代理服务' },
-      { id: 'takeover', title: '应用接管' },
+      { id: 'routing', title: '应用路由' },
       { id: 'failover', title: '故障转移' },
       { id: 'usage', title: '用量统计' },
       { id: 'model-test', title: '模型检查' },

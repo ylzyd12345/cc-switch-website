@@ -1,0 +1,4307 @@
+# Changelog
+
+Important release updates for CC Switch.
+
+## [3.14.1] - 2026-04-23
+
+> Tray usage visibility, Codex OAuth stability fixes, Skills import/install reliability, and removal of the Hermes config health scanner
+
+### Overview
+
+CC Switch v3.14.1 is a patch release following v3.14.0, focused on **Codex OAuth reverse-proxy stability**, **tray usage visibility**, **Skills import / install reliability**, **Gemini session restore paths**, and **simplifying Hermes configuration health handling**.
+
+For the first time, the system tray surfaces **cached usage** for the current Claude / Codex / Gemini provider directly in its submenus — including subscription summaries and usage-script summaries with color-coded utilization markers. For Chinese coding-plan providers like Kimi / Zhipu / MiniMax, the tray additionally renders a **5-hour + weekly window** layout in the `🟢 h12% w80%` style (worst utilization drives the emoji), semantically identical to the official subscription badges. Creating a Claude provider whose `ANTHROPIC_BASE_URL` matches a known coding-plan host now auto-injects `meta.usage_script` so the tray lights up without opening the Usage Script modal.
+
+Several Codex OAuth reverse-proxy stability issues are addressed this release: client-provided session IDs are now used as both `prompt_cache_key` and the Codex session header to avoid UUID-driven cache churn; non-streaming Anthropic clients receive proper JSON responses even when the ChatGPT Codex upstream forces OpenAI Responses SSE; and Stream Check now builds probes with the same `store: false`, encrypted reasoning include, and provider FAST mode setting as production requests, eliminating the "check fails but it actually works" mismatch. Paired with a new explicit **FAST mode toggle**, users can now opt into `service_tier="priority"` on Codex OAuth-backed Claude providers, trading latency against ChatGPT quota consumption on their own terms.
+
+Additionally, the in-app **Hermes config health scanner** and its warning banner are removed (along with the `scan_hermes_config_health` command, `HermesHealthWarning` type, and `HermesWriteOutcome.warnings` payload), refocusing the Hermes surface on active provider display, switching defaults, memory editing, and launching the Hermes Web UI — deep configuration health is now Hermes's own responsibility.
+
+### Highlights
+
+- **Tray Usage Visibility**: Claude / Codex / Gemini tray submenus show cached usage for the current provider, including subscription and script-based summaries with color markers; refreshes are throttled, limited to visible apps, and synchronized back into React Query (#2184, thanks @TuYv)
+- **Tray Coding-Plan Usage (Kimi / Zhipu / MiniMax)**: The tray renders 5-hour + weekly window usage using the `🟢 h12% w80%` layout; Claude providers whose base URL matches a known host auto-inject `meta.usage_script`
+- **Codex OAuth FAST Mode**: New explicit FAST mode toggle for Codex OAuth-backed Claude providers; when enabled, converted Responses requests send `service_tier="priority"`. Off by default (#2210, thanks @JesusDR01)
+- **Codex OAuth Stability**: Fixed reverse-proxy cache routing (#2218, thanks @majiayu000), Responses SSE aggregation (#2235, thanks @xpfo-go), and Stream Check parity with production (#2210, thanks @JesusDR01)
+- **Hermes Config Health Scanner Removed**: Refocuses the Hermes surface on provider management, memory editing, and launching the Web UI — no longer duplicates deep configuration health judgments
+- **Skills Import / Install Reliability**: Import dialog disables actions while pending and deduplicates results by ID (#2211, thanks @TuYv); model quick-set / one-click config applies against the latest form state (#2249, thanks @Coconut-Fish); root-level `SKILL.md` repo installs are stable (#2231, thanks @santugege)
+- **Gemini Session Restore Paths**: Session scanning reads `.project_root` metadata and passes the original project directory back into restore flows (#2240, thanks @tisonkun)
+- **Session / Settings Layout Polish**: Hardened the scroll-area viewport with width containment to fix horizontal overflow; tightened app bottom and settings footer spacing (#2201, thanks @Coconut-Fish)
+
+### Added
+
+#### Tray Usage Visibility
+
+- System tray submenus now show **cached usage** for the current Claude / Codex / Gemini provider (#2184, thanks @TuYv)
+- Includes subscription quota summaries and usage-script summaries with color-coded utilization markers
+- Tray-triggered refreshes are **throttled**, **limited to visible apps**, and synchronized back into React Query so the main window and tray share the same usage data
+
+#### Tray Coding-Plan Usage (Kimi / Zhipu / MiniMax)
+
+- The tray renders **5-hour + weekly window** usage for Chinese coding-plan providers
+- Uses the same `🟢 h12% w80%` two-window layout as official subscription badges (worst utilization drives the emoji color)
+- Creating a Claude provider whose `ANTHROPIC_BASE_URL` matches a known coding-plan host **auto-injects** `meta.usage_script`, so the tray lights up without opening the Usage Script modal
+- Existing `usage_script` values are **preserved on update**, never clobbering user customizations
+
+#### Codex OAuth FAST Mode
+
+- New explicit FAST mode toggle for Codex OAuth-backed Claude providers (#2210, thanks @JesusDR01)
+- When enabled, converted Responses requests send `service_tier="priority"` for lower latency
+- Off by default to avoid unexpectedly increasing ChatGPT quota consumption
+
+### Changed
+
+#### Session and Settings Layout Polish
+
+- Hardened the scroll-area viewport with width containment to fix horizontal overflow (#2201, thanks @Coconut-Fish)
+- Tightened app bottom and settings footer spacing so long session / settings views fit more cleanly
+
+### Removed
+
+#### Hermes Config Health Scanner
+
+- Removed the in-app Hermes config health scanner and its warning banner
+- Removed the `scan_hermes_config_health` command, `HermesHealthWarning` type, and `HermesWriteOutcome.warnings` payload
+- The CC Switch Hermes surface now focuses on its core job: active provider display, default provider switching, memory editing, and launching the Hermes Web UI for deep configuration
+
+### Fixed
+
+#### Codex OAuth Cache Routing
+
+- Use the client-provided session ID as both `prompt_cache_key` and the Codex session header, preserving explicit cache keys (#2218, thanks @majiayu000)
+- Stop generating UUIDs that caused cache-identity churn, stabilizing the ChatGPT Codex reverse-proxy cache identity
+
+#### Codex OAuth Responses SSE Aggregation
+
+- Non-streaming Anthropic clients now receive proper JSON even when the ChatGPT Codex upstream forces OpenAI Responses SSE (#2235, thanks @xpfo-go)
+- CC Switch aggregates the upstream SSE events before running the non-streaming transform
+
+#### Codex OAuth Stream Check Parity
+
+- Stream Check now builds Codex OAuth probe requests with the same `store: false`, encrypted reasoning include, and provider FAST mode setting as production proxy traffic (#2210, thanks @JesusDR01)
+- Eliminates the "check fails but it actually works" mismatch
+
+#### Codex Model Extraction
+
+- Reading the `model` field from Codex config now uses TOML parsing instead of first-line regex matching (#2227, thanks @nmsn)
+- Multiline TOML is handled correctly
+
+#### Model Quick-Set / One-Click Config
+
+- Model quick-set now applies against the **latest** provider form config (#2249, thanks @Coconut-Fish)
+- Fixes stale form state preventing one-click configuration from succeeding
+
+#### Skills Import Duplicates
+
+- The Skills import dialog disables actions while import is pending (#2211, thanks @TuYv)
+- The installed-skills cache deduplicates imported results by ID, preventing double-clicks from adding duplicate installed entries (#2139)
+
+#### Root-Level Skill Repos
+
+- Skill install and update flows now consistently resolve three source patterns: direct nested paths, install-name recursive search, and repository-root `SKILL.md` sources (#2231, thanks @santugege)
+
+#### Gemini Session Restore Paths
+
+- Gemini session scanning now reads `.project_root` metadata (#2240, thanks @tisonkun)
+- Restore flows can pass the original project directory when available
+
+#### Provider Hover Names
+
+- Provider icons now expose the provider name on hover for inline SVG, image URL, and fallback initials render paths (#2237, thanks @tisonkun)
+
+### Notes & Caveats
+
+- **Hermes Health Scanner Removed**: If you were relying on CC Switch to surface deep Hermes YAML configuration issues, switch to the "Launch Hermes Web UI" toolbar button and inspect them in Hermes's own panel. Day-to-day provider management, switching, memory editing, and MCP / Skills sync continue to be handled by CC Switch.
+- **Codex OAuth FAST Mode Off by Default**: Only turn it on if you accept potentially increased ChatGPT quota consumption in exchange for lower latency.
+- **Tray Cached Usage**: Refreshes are throttled and limited to the currently visible app to avoid unnecessary upstream API calls; values are synchronized into React Query so the main window and tray stay in sync.
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| OS      | Minimum Version              | Architecture                        |
+| ------- | ---------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later          | x64                                 |
+| macOS   | macOS 12 (Monterey) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below              | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                           |
+| ---------------------------------------- | ----------------------------------------------------- |
+| `CC-Switch-v3.14.1-Windows.msi`          | **Recommended** - MSI installer, supports auto-update |
+| `CC-Switch-v3.14.1-Windows-Portable.zip` | Portable, extract and run, no registry writes         |
+
+#### macOS
+
+| File                             | Description                                             |
+| -------------------------------- | ------------------------------------------------------- |
+| `CC-Switch-v3.14.1-macOS.dmg`    | **Recommended** - DMG installer, drag into Applications |
+| `CC-Switch-v3.14.1-macOS.zip`    | Extract and drag into Applications, Universal Binary    |
+| `CC-Switch-v3.14.1-macOS.tar.gz` | For Homebrew installation and auto-update               |
+
+> macOS builds are Apple code-signed and notarized — install directly.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended | Installation                                                           |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage` | Add execute permission and run, or use AUR                             |
+| Other distros / not sure                | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.14.0] - 2026-04-21
+
+> Hermes Agent becomes the 6th managed app, Claude Opus 4.7 rolls out across the preset matrix, Gemini Native API proxy, "Local Routing" rename, and application-level window controls
+
+### Overview
+
+CC Switch v3.14.0 is a major release centered on onboarding **Hermes Agent as the 6th first-class managed app** and rolling out **Claude Opus 4.7** across the full aggregator and Bedrock preset matrix. Hermes support covers a database v9 → v10 migration, a complete Rust command surface, YAML-backed `~/.hermes/config.yaml` read/write with atomic backups, MCP sync, Skills sync, SQLite + JSONL session management, and dedicated frontend panels including a Memory editor. All four API protocols aligned with Hermes Agent 0.10.0 (`chat_completions`, `anthropic_messages`, `codex_responses`, `bedrock_converse`) are selectable. Providers owned by the user-authored `providers:` dict are rendered as read-only cards, and deep YAML configuration is delegated directly to the Hermes Web UI.
+
+Beyond Hermes, this release adds a **Gemini Native API proxy** (`api_format = "gemini_native"`) so the proxy can forward directly to Google's `generateContent` endpoint with full streaming, schema conversion, and shadow request support; renames the legacy "Local Proxy Takeover" to **Local Routing** across UI copy, README, and docs in all three locales; introduces **application-level window controls**, an opt-in setting that materially improves the experience on Linux Wayland where compositor-drawn buttons can become inert; and bundles late additions for launching `hermes dashboard` from the toolbar, a LemonData preset across all six apps, a DDSHub Codex endpoint, plus several Hermes health-check and Usage modal fixes.
+
+On the session side, the message list is **virtualized** via `@tanstack/react-virtual` so conversations with thousands of records scroll smoothly and long messages collapse by default; the Usage dashboard adds a **date range picker** (Today / 1d / 7d / 14d / 30d + custom date-time calendar) and a page-jump input; **Stream Check error classification** now surfaces color-coded toasts with refreshed default probe models and an explicit "model not found" branch; and switching to official providers is **blocked while Local Routing is active** to avoid account-suspension risk. The pricing database is reseeded from v8 → v9 with ~50 new model entries (Claude 4.7, Opus 4.7 Adaptive Thinking, Grok 4, Qwen 3.5/3.6, MiniMax M2.5/M2.7, Doubao Seed 2.0 series, GLM-5/5.1 and others) and corrected stale prices.
+
+### Highlights
+
+- **Hermes Agent Support (6th Managed App)**: Database v9 → v10 migration, full Rust command surface, YAML read/write with atomic backups, MCP sync, Skills sync, SQLite + JSONL session management, dedicated frontend panels, and four API protocols (`chat_completions` / `anthropic_messages` / `codex_responses` / `bedrock_converse`)
+- **Claude Opus 4.7 Rollout**: Adaptive thinking whitelisting, per-million pricing seed, Bedrock SKU (`anthropic.claude-opus-4-7` / `global.anthropic.claude-opus-4-7`, dropping the legacy `-v1` suffix); all aggregator and Bedrock presets migrated to Opus 4.7 as the default Opus model
+- **Claude `max` Effort Tier**: Effort dropdown upgraded from `high` to `max`
+- **Gemini Native API Proxy**: New `api_format = "gemini_native"` forwards directly to Google's `generateContent` with full streaming / schema conversion / shadow request support
+- **GitHub Copilot Enterprise Server**: GHES authentication and endpoint configuration for Copilot-backed Claude providers
+- **Copilot Premium Consumption Deep Optimization**: Proactive thinking-block stripping before forwarding, `tool_result` classification fix, subagent detection, `x-interaction-id` billing merge, orphan `tool_result` sanitization, and default warmup downgrade — a systematic reduction in premium interaction consumption
+- **Session List Virtualization**: Long conversations scroll smoothly and long messages collapse by default to reduce text layout cost
+- **Codex / OpenClaw Session Title Extraction**: Meaningful title extraction with 2-line display; strips OpenClaw `message_id` suffix noise
+- **Usage Date Range Picker**: Today / 1d / 7d / 14d / 30d preset tabs + custom date-time calendar; page-jump input on paginated lists
+- **Stream Check Error Classification**: Color-coded error toasts; refreshed default probe models; explicit "model not found" detection
+- **Block Official Provider Switching During Local Routing**: Routing official API traffic through the local proxy carries account-suspension risk — switches are blocked with a warning toast
+- **Pricing Database Refresh (v8 → v9)**: ~50 new model entries and corrected stale prices
+- **Application-Level Window Controls**: Opt-in setting to render CC Switch's own min/max/close buttons, materially improving Linux Wayland experience
+- **Hermes in Unified Skills Management**: Skill install, enable, and filter now cover Hermes
+- **Hermes / OpenClaw Config Directory Override**: Point CC Switch at a custom `~/.hermes/config.yaml` or `openclaw.json` location
+- **Launch Hermes Dashboard from Toolbar**: When the Hermes Web UI probe fails, the toolbar entry offers to run `hermes dashboard` in the user's preferred terminal
+- **New Partner Presets**: LemonData across all six apps; DDSHub Codex endpoint; StepFun Step Plan
+
+### Added
+
+#### Hermes Agent Support (6th Managed App)
+
+CC Switch now treats Hermes Agent as a first-class managed app alongside Claude / Codex / Gemini / OpenCode / OpenClaw.
+
+- **Database Migration v9 → v10**: Adds `enabled_hermes` columns to `mcp_servers` and `skills` tables (`DEFAULT 0`, auto-migrated, no data loss)
+- **YAML Configuration Read/Write**: `~/.hermes/config.yaml` read/write with atomic backups; `tests/hermes_roundtrip.rs` guards against dropped OAuth MCP `auth` blocks or pollution of unrelated YAML keys
+- **Four API Protocols**: Aligned with Hermes Agent 0.10.0 — `chat_completions` / `anthropic_messages` / `codex_responses` / `bedrock_converse`; new deeplinks default to `chat_completions`
+- **User `providers:` Dict Read-Only Rendering**: User-authored providers in the YAML appear as read-only cards in CC Switch; deep configuration delegates to the Hermes Web UI
+- **Additive Switching**: Unlike Claude / Codex's "override" style, all Hermes providers coexist in the same YAML
+
+#### Hermes Memory Panel
+
+- New Memory panel for editing `MEMORY.md` / `USER.md` directly, with an enable switch, character-count limits, and a live save flow
+- Replaces the Prompts entry for Hermes
+
+#### Hermes Provider Presets (~50)
+
+- Covers Nous Research, Shengsuanyun, OpenRouter, DeepSeek, Together AI, StepFun, Zhipu GLM, Bailian, Kimi, MiniMax, DouBao, BaiLing, ModelScope, KAT-Coder, PackyCode, Cubence, AIGoCode, RightCode, AICodeMirror, AICoding, CrazyRouter, SSSAiCode, Micu, CTok.ai, DDSHub, E-FlowCode, LionCCAPI, PIPELLM, Compshare, SiliconFlow, AiHubMix, DMXAPI, TheRouter, Novita, Nvidia, and Xiaomi MiMo
+
+#### Launch Hermes Dashboard from Toolbar
+
+- When the Hermes Web UI probe fails, the toolbar entry opens a confirm dialog offering to run `hermes dashboard` in the user's preferred terminal
+- Spawned via a temp bash / batch script; `hermes dashboard` opens the browser itself once ready, so no polling is required
+- The Memory panel and Health banner keep the existing toast behavior
+- Also corrects the stale `hermes web` hint in the offline toast (the real command is `hermes dashboard`)
+- Linux terminal detection reordered to try `which` before stat'ing `/usr/bin`, `/bin`, `/usr/local/bin`
+
+#### Claude Opus 4.7 Support
+
+- New Claude Opus 4.7 with adaptive thinking whitelisting, per-million pricing seed, and Bedrock SKU (`anthropic.claude-opus-4-7` / `global.anthropic.claude-opus-4-7`, dropping the legacy `-v1` suffix)
+- All aggregator and Bedrock presets migrated to Opus 4.7 as the default Opus model
+
+#### Claude `max` Effort Tier
+
+- Claude effort dropdown upgraded from `high` to `max` for extended reasoning capacity
+
+#### Gemini Native API Proxy
+
+- New `api_format = "gemini_native"` so the proxy can forward directly to Google's `generateContent` API (#1918, thanks @yovinchen)
+- Full streaming, schema conversion, and shadow request support
+- Adds `gemini_url.rs`, `gemini_schema.rs`, `gemini_shadow.rs`, `streaming_gemini.rs`, and `transform_gemini.rs` under the proxy providers module
+
+#### GitHub Copilot Enterprise Server (GHES)
+
+- GHES authentication and endpoint configuration for Copilot-backed Claude providers (#2175, thanks @hotelbe)
+
+#### Session List Virtualization
+
+- Virtualized the session list via `@tanstack/react-virtual` so long conversations (thousands of records) scroll smoothly
+- Long session messages are collapsed by default to reduce text layout cost
+
+#### Codex / OpenClaw Session Title Extraction
+
+- Meaningful title auto-extraction for Codex and OpenClaw sessions with 2-line display
+- Strips OpenClaw `message_id` suffix noise
+
+#### Usage Date Range Picker
+
+- New date range selector on the usage dashboard with preset tabs (Today / 1d / 7d / 14d / 30d) + custom date + time calendar (#2002, thanks @yovinchen)
+- Page-jump input added on paginated lists
+
+#### Model Mapping Quick-Set
+
+- New quick-set button next to model mapping fields in provider forms for faster edits (#2179, thanks @lispking)
+
+#### Stream Check Error Classification
+
+- Stream Check errors are classified and surfaced as color-coded toasts
+- Refreshed default probe models to match each vendor's current lineup
+- Explicit detection for "model not found" responses
+
+#### Block Official Provider Switching During Local Routing
+
+- Switching to official providers is blocked while Local Routing is active, with a warning toast
+- Reason: routing official API traffic through the local proxy carries account-suspension risk
+
+#### Pricing Database Refresh (v8 → v9)
+
+- Reseed-on-migration pricing table
+- ~50 new model pricing entries including Claude 4.7, Opus 4.7 Adaptive Thinking, Grok 4, Qwen 3.5/3.6, MiniMax M2.5/M2.7, Doubao Seed 2.0 series, GLM-5/5.1
+- Corrected stale prices for DeepSeek, Kimi K2.5, and others
+
+#### Application-Level Window Controls
+
+- Opt-in setting to render CC Switch's own minimize / toggle-maximize / close buttons instead of system decorations (#1119, thanks @git1677967754)
+- Materially improves the experience on Linux Wayland where compositor-drawn buttons can become inert
+
+#### Hermes in Unified Skills Management
+
+- Hermes is added to the unified Skills surface
+- Skill install, enable, and filter now cover the Hermes app alongside Claude / Codex / Gemini / OpenCode / OpenClaw
+
+#### OpenClaw Config Directory Override
+
+- New settings option to point CC Switch at a custom `openclaw.json` location (#1518, thanks @mrFranklin)
+
+#### Hermes Config Directory Override
+
+- New settings option to point CC Switch at a custom `~/.hermes/config.yaml` location, backed by data-driven dispatch
+
+#### StepFun Step Plan Preset
+
+- StepFun Step Plan (EN / ZH) provider presets (#2155, thanks @hengm3467)
+
+#### New API Usage Script Template
+
+- Added a User-Agent header to the New API usage script template for better upstream compatibility
+
+#### LemonData Provider Preset (All Six Apps)
+
+- LemonData registered as a third-party partner preset across Claude, Codex, Gemini, OpenCode, OpenClaw, and Hermes
+- Icon assets and zh / en / ja partner-promotion copy
+- Claude preset uses `ANTHROPIC_API_KEY` auth; OpenAI-compatible apps target `gpt-5.4`
+
+#### DDSHub Codex Preset
+
+- Added a Codex-compatible endpoint for DDSHub at the same host as its Claude service
+- Base URL omits the `/v1` suffix because the gateway auto-routes OpenAI SDK paths
+
+### Changed
+
+#### "Local Proxy Takeover" → "Local Routing"
+
+- Unified the terminology across UI copy, README, and docs in all three locales
+- Functional behavior is unchanged
+
+#### Hermes `Auto` api_mode Removed
+
+- Users must pick an explicit protocol; new deeplinks default to `chat_completions`
+- Eliminates URL-based heuristic surprises
+
+#### Hermes Provider Form
+
+- Added an API mode dropdown and per-provider model editor
+- Binds per-provider models to the top-level `model:` when switching active providers
+
+#### Hermes Deep Config Delegation
+
+- Deep YAML knobs are no longer duplicated in the CC Switch form — they are delegated to the Hermes Web UI via a direct launch action
+
+#### Hermes Toolbar Layout
+
+- Swapped the Hermes Web UI button from `ExternalLink` to `LayoutDashboard` (clicking may spawn `hermes dashboard` rather than just opening a URL)
+- Moved MCP to the final toolbar slot so Hermes matches the Claude / Codex / Gemini / OpenCode layout
+
+#### `ANTHROPIC_REASONING_MODEL` Removed from Claude Quick-Set
+
+- Decoupled the reasoning capability from model selection; the legacy field is no longer surfaced in the quick-set form
+
+#### Per-Provider Proxy Config Removed
+
+- Consolidated into global Local Routing
+- Provider-level proxy toggle and associated storage are gone
+
+#### Unified Toolbar Icon Button Width
+
+- Normalized icon-button widths across Claude / Codex / Gemini / OpenCode / OpenClaw / Hermes panels for a consistent header look
+
+#### Rust Toolchain Pinned to 1.95
+
+- Adopted clippy 1.95 suggestions across the workspace and pinned the toolchain to prevent nightly drift
+
+#### Tray Menu ID Constant
+
+- The tray identifier moved from the hardcoded string `"main"` to a `TRAY_ID` constant (`"cc-switch"`) across all call sites (#1978, thanks @lidaxian121)
+
+#### Copilot Premium Consumption Deep Optimization
+
+A systematic overhaul to reduce Copilot reverse-proxy premium interaction consumption across multiple dimensions:
+
+- **Proactive Thinking Block Stripping Before Forwarding**: Anthropic's `thinking` / `redacted_thinking` blocks are rejected by OpenAI-compatible endpoints. Previously, the request failed upstream, burning one premium interaction before the `thinking_rectifier` could retry. A new proactive strip step (Copilot optimization pipeline step 3.5, after `tool_result` merging) eliminates that wasted interaction
+- **Request Classification Fix**: Messages containing `tool_result` are now classified as agent continuation instead of user-initiated, preventing every tool call from being falsely counted as a premium interaction
+- **Subagent Detection**: Identifies subagents via `__SUBAGENT_MARKER__` with `metadata._agent_` fallback, setting `x-interaction-type=conversation-subagent`
+- **Deterministic `x-interaction-id` Billing Merge**: Derives `x-interaction-id` from the session ID so multiple requests within the same session collapse into a single billing interaction
+- **Orphan `tool_result` Sanitization**: Cleans up orphan `tool_result` entries to prevent upstream errors that would trigger retries and duplicate billing
+- **Warmup Downgrade Enabled by Default**: Uses `gpt-5-mini` as the default downgrade model
+- **Optimization Pipeline Reorder**: classify → sanitize → merge → warmup, so classification sees raw `tool_result` semantics
+- Fixed a `CopilotOptimizerConfig` default-value inconsistency (unified to `gpt-5-mini`)
+
+#### Usage Script Intranet Support
+
+- Removed private-IP / suspicious-hostname blocking from usage scripts, unblocking enterprise intranet, Docker, and self-hosted API endpoints
+- Built-in templates still enforce HTTPS (except localhost) and same-origin checks; custom templates remain user-controlled with those request-URL checks skipped
+
+#### Failover Queue Notes
+
+- Provider notes now appear in failover queue selectors and queue rows for easier identification across multi-provider queues (#2138, thanks @Coconut-Fish)
+
+### Fixed
+
+#### Header Auto-Compact Latching After Maximize
+
+- The toolbar no longer stays compacted after maximize/restore; compaction now reevaluates on size changes
+
+#### Hermes YAML Pollution & OAuth MCP `auth` Drop
+
+- Round-tripping through CC Switch no longer drops OAuth MCP `auth` blocks or pollutes unrelated YAML keys
+- Guard tests added via `tests/hermes_roundtrip.rs`
+
+#### Hermes Active Provider Display
+
+- Hermes UI now correctly surfaces the active provider and wires add / enable / remove actions
+
+#### Hermes Provider Persistence
+
+- Providers persist under `custom_providers:` so `api_mode` and `model` survive restarts and config reloads
+
+#### Hermes Health Check Borrowing OpenClaw Schema
+
+- Hermes providers were routed through `check_additive_app_stream` (the OpenClaw dispatcher), which reads camelCase `baseUrl` / `apiKey` / `api` and surfaced "OpenClaw provider is missing baseUrl" even when every Hermes field was filled
+- Introduced `check_hermes_stream` with Hermes-specific extractors that map `api_mode` (`chat_completions` / `anthropic_messages` / `codex_responses`) to the matching `check_claude_stream` `api_format`; `bedrock_converse` returns as unsupported
+- `api_mode` is now resolved before URL / API key extraction, so `bedrock_converse` users see the real cause rather than a misleading "missing base_url"
+
+#### Usage Query Modal for Hermes & OpenClaw
+
+- `getProviderCredentials` now reads flat `settingsConfig` fields for Hermes (snake_case `base_url` / `api_key`) and OpenClaw (camelCase `baseUrl` / `apiKey`), so the "official balance" template auto-selects for matching providers like SiliconFlow
+- Refactored the BALANCE and TOKEN_PLAN test paths to reuse the precomputed `providerCredentials` instead of re-reading `env.ANTHROPIC_*` directly, fixing the "empty key" error for non-Claude apps even when the key was configured
+
+#### Codex `cache_control` Preservation
+
+- Preserve `cache_control` when merging system prompts during Codex format conversion (#1946, thanks @yovinchen)
+
+#### Claude Prompt Cache Key Leak
+
+- Stopped sending prompt cache keys during Claude chat conversions (#2003, thanks @yovinchen)
+
+#### Proxy Hop-by-Hop Header Stripping
+
+- Strip hop-by-hop response headers (Connection, Keep-Alive, Transfer-Encoding, etc.) per RFC 7230 (#2060, thanks @yovinchen)
+
+#### Permissive Proxy CORS Removed
+
+- Removed the permissive CORS layer from the proxy (#1915, thanks @zerone0x)
+
+#### Backend Error Details in Proxy Toast
+
+- Surface backend error payload details in proxy-related toast messages instead of a generic failure string
+
+#### Usage Log Deduplication
+
+- Deduplicated proxy and session-log usage records so the same request is no longer double-counted
+- Synced the request log time range with the dashboard's 1d / 7d / 30d selector
+
+#### Common Config Checkbox Persistence
+
+- Checkbox state for Claude / Codex / Gemini common-config toggles now persists correctly across reopens (#2191, thanks @zxZeng)
+
+#### Claude Plugin `settings.json` Sync
+
+- Editing the current provider now syncs back to `settings.json` for the Claude plugin path (#1905, thanks @chengww5217)
+
+#### Google Official Gemini Env Preservation
+
+- Saving the Google Official Gemini provider no longer clobbers the `env` block
+
+#### OpenCode JSON5 Parser for Trailing Commas
+
+- OpenCode config reads now tolerate trailing commas via a JSON5 parser (#2023, thanks @wwminger)
+
+#### Preset Refreshes
+
+- Refreshed stale context windows for DeepSeek and Claude 1M
+- Refreshed stale model IDs; backfilled Hermes model lists
+- Fixed the Nous endpoint and replaced the Hermes placeholder icon with Nous brand artwork
+- Pruned unused official Hermes presets
+
+#### Auto-Expand Collapsed Messages on Search Hit
+
+- Collapsed messages now auto-expand when a search match lands inside hidden content
+
+#### Unknown Subscription Quota Tiers Hidden
+
+- Provider cards no longer render unknown subscription quota tiers
+
+#### Weekly Limit Label Unified
+
+- Aligned the `weekly_limit` tier label with the official 7-day naming across locales
+
+#### Root-Level Skill Repo Install
+
+- Fixed skill installation when the repository root itself is a skill
+
+#### Session ID Parsing Clippy
+
+- Removed a redundant closure in session ID parsing (clippy warning)
+
+#### Stream Check Default Models Refresh
+
+- Updated stream-check default probe models to match each vendor's current lineup
+
+#### Skills Import Sync
+
+- Imported Skills are now immediately synced into enabled app directories instead of only being recorded in the database (#2101, thanks @yaoguohh)
+- The UI no longer shows "installed" while the target app directory is missing the skill
+
+#### Ghostty Session Restore
+
+- Fixed Ghostty session restore launch by using shell execution with `--working-directory` (#1976, thanks @Suda202)
+- Avoids `cwd` escaping issues when the path contains spaces or special characters
+
+### Docs
+
+#### README Sponsor Updates
+
+- Updated SiliconFlow signup bonus to ¥16
+- Trimmed the SSSAiCode sponsor blurb
+- Updated partner logos
+- Added LemonData as a new sponsor
+
+#### Global Proxy Hint Clarified
+
+- Clarified the global proxy hint about local routing across all three locales
+
+#### Takeover → Routing Rename
+
+- Renamed takeover docs to routing and updated anchors across all languages
+
+#### PIPELLM Website URL
+
+- Updated the PIPELLM sponsor website URL to `code.pipellm.ai`
+
+### ⚠️ Breaking Changes
+
+#### Hermes requires explicit `api_mode`
+
+- The `Auto` mode is gone; imported or deeplinked providers default to `chat_completions`
+- Users with prior `Auto` configs will be prompted to pick a protocol
+
+#### `ANTHROPIC_REASONING_MODEL` removed from Claude quick-set
+
+- The legacy field is no longer exposed; existing settings are cleaned up automatically
+
+#### Per-provider proxy configuration removed
+
+- Migrate to the global Local Routing setting
+- Existing per-provider proxy values are ignored
+
+#### Database schema v9 → v10
+
+- Adds `enabled_hermes` columns to `mcp_servers` and `skills`
+- Auto-migrated with `DEFAULT 0`; no data loss
+
+#### Pricing table reseeded (v8 → v9)
+
+- The `model_pricing` table is cleared and reseeded on first launch to pick up new models and corrected prices
+
+#### XCodeAPI preset removed
+
+- Users of the XCodeAPI preset should switch to another provider
+
+### ⚠️ Risk Notice
+
+This release inherits the risk notices originally introduced in v3.12.3 / v3.13.0 for reverse-proxy-style features.
+
+**GitHub Copilot Reverse Proxy**: Using Copilot's reverse-proxy path may violate GitHub / Microsoft's terms of service. See [v3.12.3 release notes](v3.12.3-en.md#️-risk-notice).
+
+**Codex OAuth Reverse Proxy**: Using the Codex OAuth reverse proxy with a ChatGPT subscription may violate OpenAI's terms of service. See [v3.13.0 release notes](v3.13.0-en.md#️-risk-notice).
+
+By enabling these features, users **accept all associated risks**. CC Switch is not responsible for any account restrictions, warnings, or service suspensions that result from using these features.
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| OS      | Minimum Version         | Architecture                        |
+| ------- | ----------------------- | ----------------------------------- |
+| Windows | Windows 10 or later     | x64                                 |
+| macOS   | macOS 12 (Monterey) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below         | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                     |
+| ---------------------------------------- | ----------------------------------------------- |
+| `CC-Switch-v3.14.0-Windows.msi`          | **Recommended** - MSI installer, supports auto-update |
+| `CC-Switch-v3.14.0-Windows-Portable.zip` | Portable, extract and run, no registry writes   |
+
+#### macOS
+
+| File                             | Description                                              |
+| -------------------------------- | -------------------------------------------------------- |
+| `CC-Switch-v3.14.0-macOS.dmg`    | **Recommended** - DMG installer, drag into Applications  |
+| `CC-Switch-v3.14.0-macOS.zip`    | Extract and drag into Applications, Universal Binary     |
+| `CC-Switch-v3.14.0-macOS.tar.gz` | For Homebrew installation and auto-update                |
+
+> macOS builds are Apple code-signed and notarized — install directly.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended | Installation                                                           |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage` | Add execute permission and run, or use AUR                             |
+| Other distros / not sure                | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.13.0] - 2026-04-10
+
+> Lightweight Mode, Quota & Balance Visibility, Provider Model Auto-Fetch, Codex OAuth Reverse Proxy, and Tray Per-App Submenus
+
+### Overview
+
+CC Switch v3.13.0 is a major feature release centered on observability, provider workflow ergonomics, and proxy compatibility. It adds inline **quota and balance displays** across official Claude / Codex / Gemini providers plus Token Plan, Copilot, and third-party balance APIs; introduces a **Lightweight Mode** that keeps CC Switch running from the system tray without a main window; delivers **automatic model discovery** via OpenAI-compatible `/v1/models` across all five supported applications; ships a **Codex OAuth reverse proxy** for ChatGPT subscribers; reorganizes the tray menu into **per-app submenus**; rebuilds the proxy forwarding stack on a **Hyper-based client**; and overhauls the **Skills workflow** with discovery, batch updates, storage-location toggling, and built-in skills.sh search and install. Additional improvements include full URL endpoint mode, enhanced token usage tracking, the Copilot interaction optimizer, a UTF-8 streaming chunk boundary fix for multi-byte output, a Linux startup UI responsiveness fix, and a friendlier new-user onboarding experience.
+
+### Highlights
+
+- **Lightweight Mode**: Tray-only operating mode that destroys the main window on exit to tray and recreates it on demand, reducing CC Switch's desktop footprint to near zero when idle
+- **Quota & Balance Visibility**: Inline quota or balance readout across provider cards — official Claude / Codex / Gemini subscriptions, GitHub Copilot premium interactions, Codex OAuth, Token Plan providers (Kimi / Zhipu GLM / MiniMax), plus official balance queries for DeepSeek, StepFun, SiliconFlow, OpenRouter, and Novita AI
+- **Provider Model Auto-Fetch**: OpenAI-compatible `/v1/models` discovery across Claude, Codex, Gemini, OpenCode, and OpenClaw provider forms, with grouped dropdown selection and failure-specific error messages
+- **Codex OAuth Reverse Proxy**: ChatGPT Codex reverse proxy exposed as a new Claude provider card type, allowing users to use their ChatGPT subscription in Claude Code. Includes managed OAuth login and inline subscription quota display ([⚠️ Risk Notice](#️-risk-notice))
+- **Tray Per-App Submenus**: Reworked the tray menu into per-application submenus so it never overflows the screen and background provider switching scales to dozens of providers per app
+- **Skills Discovery & Batch Updates**: SHA-256-based skill update detection, per-skill and "Update All" batch actions, `skills.sh` search integration, and a storage-location toggle between CC Switch storage and `~/.agents/skills`
+- **Session Workflow Upgrades**: Batch session deletion, a directory picker before launching Claude terminal restore, usage import from Claude / Codex / Gemini session logs without proxy interception, precise Codex JSONL parsing, and per-app usage filtering
+- **OpenCode / OpenClaw Stream Check Coverage**: OpenCode detection via npm package mapping, OpenClaw `openai-completions` support, and the remaining OpenClaw protocol variants — with custom-header passthrough and auth-header detection fixes
+- **Full URL Endpoint Mode**: Provider option that treats `base_url` as a complete upstream endpoint, unblocking vendors that require nonstandard URL layouts
+- **Hyper-based Proxy Forwarding Stack**: Refactored proxy forwarding onto a Hyper-based client with transparent header forwarding, improved endpoint rewriting, and better support for dynamic upstream endpoints
+- **Copilot Interaction Optimizer**: Request classification and routing logic that reduces unnecessary GitHub Copilot premium interaction consumption
+- **UTF-8 Stream Chunk Boundary Fix**: All four SSE streaming paths now preserve incomplete multi-byte UTF-8 sequences across TCP chunks, eliminating intermittent U+FFFD garbled output via the Copilot reverse proxy
+- **Linux Startup UI Fix**: Fixed the long-standing issue where the window UI couldn't receive clicks on Linux until the user manually maximized and restored the window
+- **First-Run Onboarding**: One-time welcome dialog on fresh installs, automatic seeding of Claude / OpenAI / Google official presets, and auto-import of OpenCode / OpenClaw live configurations on startup
+- **Claude Session Titles & Search Highlighting**: Meaningful title extraction for Claude sessions using a priority chain (custom-title metadata → first user message → directory basename), plus keyword highlighting in Session Manager search results
+- **URL-Based Provider Icons**: Dual rendering mode supporting Vite URL imports for large SVGs and raster images (PNG, JPG, WebP), keeping small SVGs inlined
+- **New Provider Presets**: TheRouter, DDSHub, LionCCAPI, Shengsuanyun (胜算云), PIPELLM, and E-FlowCode across supported applications
+
+### New Features
+
+#### Lightweight Mode
+
+A tray-only operating mode that dramatically reduces CC Switch's desktop footprint when idle.
+
+- Destroys the main window on exit-to-tray instead of hiding it, freeing UI resources and memory
+- Recreates the window on demand when the user reopens CC Switch from the tray, a deeplink, or single-instance activation
+- Integrated into every window-re-show path: normal startup, deeplink, single_instance, tray `show_main`, and the lightweight-exit round-trip
+
+#### Quota & Balance Visibility
+
+Added inline quota and balance readouts to provider cards so users can see remaining capacity without leaving the card.
+
+- **Official subscriptions**: Inline quota display for Claude, Codex, and Gemini official providers
+- **GitHub Copilot**: Premium interactions quota display on the Copilot provider card
+- **Codex OAuth**: ChatGPT subscription quota inline with the Codex OAuth provider card
+- **Token Plan providers**: Kimi, Zhipu GLM, and MiniMax usage progression display (requires manual activation to avoid confusion)
+- **Third-party balances**: Official balance queries for DeepSeek, StepFun, SiliconFlow, OpenRouter, and Novita AI (requires manual activation to avoid confusion)
+- Health-check and usage-config buttons are hidden for official providers to keep the card clean
+
+#### Provider Model Auto-Fetch
+
+Added OpenAI-compatible model discovery to every provider form, removing the manual copy-paste loop for model IDs.
+
+- Queries the configured provider endpoint's `/v1/models`
+- Groups models in the dropdown by category for easier selection
+- Failure-specific error messages distinguish network / authentication / endpoint issues
+- Supported across all five applications: Claude, Codex, Gemini, OpenCode, and OpenClaw
+
+#### Codex OAuth Reverse Proxy
+
+Added a reverse proxy path for ChatGPT subscribers who want to use their ChatGPT subscription in Claude Code.
+
+- Managed OAuth login flow with ChatGPT authentication
+- Surfaces as a new Claude provider card type alongside API-key providers
+- Inline subscription quota display
+- Integrated into the Auth Center for unified token management
+- See the [⚠️ Risk Notice](#️-risk-notice) below before enabling
+
+#### Tray Per-App Submenus
+
+Reorganized the tray menu so providers are grouped under each application instead of living in a flat list.
+
+- Per-application submenus for Claude, Codex, Gemini, OpenCode, and OpenClaw
+- Prevents the tray menu from overflowing the screen when users have many providers
+- Background provider switching scales cleanly to long provider lists
+
+#### Skills Discovery & Batch Updates
+
+Upgraded the Skills management panel into a complete discovery plus maintenance workflow.
+
+- **SHA-256 update detection**: Skills are content-hashed so the UI knows exactly which ones have upstream changes
+- **Per-skill and batch updates**: Individual "Update" buttons plus an animated "Update All" batch action
+- **Storage-location toggle**: Switch between CC Switch storage and `~/.agents/skills` without losing skill state
+- **Public registry search**: `skills.sh` search integrated directly into the dialog for discovering community skills
+
+#### Session Workflow Upgrades
+
+Multiple session management improvements that reduce friction when working with Claude / Codex / Gemini sessions.
+
+- **Batch session deletion**: Select and delete multiple sessions at once from Session Manager (#1693, thanks @Alexlangl)
+- **Directory picker before restore**: Claude terminal restore now prompts for the working directory up front (#1752, thanks @yovinchen)
+- **Usage from session logs without proxy**: Usage data imported directly from Claude / Codex / Gemini session logs — no proxy interception required
+- **Precise Codex JSONL parsing**: Replaced estimated Codex usage with precise JSONL session-log parsing plus Codex model name normalization for consistent pricing lookup
+- **Gemini CLI session log integration**: Gemini usage now syncs accurately from Gemini CLI session logs
+- **Per-app usage filtering**: Filter the usage dashboard by Claude, Codex, or Gemini independently
+
+#### OpenCode / OpenClaw Stream Check Coverage
+
+Extended the Stream Check panel to cover the full OpenCode and OpenClaw surface area.
+
+- OpenCode detection via npm package mapping
+- Support for the OpenClaw `openai-completions` protocol
+- Support for the remaining three OpenClaw protocol variants
+- Edge-case handling for custom-header passthrough, OpenClaw custom auth-header detection, Bedrock error messaging, and OpenCode default `baseURL` fallback
+
+#### Full URL Endpoint Mode
+
+Added a provider option that treats `base_url` as a complete upstream endpoint instead of a base URL with path appending (#1561, thanks @yovinchen).
+
+- Proxy forwarding and Stream Check both honor the full-URL mode
+- Unblocks vendors that require nonstandard URL layouts
+- Configurable per-provider on the provider form
+
+#### OpenCode StepFun Step Plan Preset
+
+- Added a StepFun Step Plan provider preset for OpenCode with sensible defaults (#1668, thanks @sky-wang-salvation)
+
+#### Copilot Interaction Optimizer
+
+Added request classification and routing logic that reduces unnecessary GitHub Copilot premium interaction consumption.
+
+- Classifies incoming requests by intent and weight
+- Routes low-value requests away from premium interaction consumption paths
+- Designed to extend the usable lifetime of a Copilot subscription
+- Note: Even with optimized consumption, using the Copilot API outside of Copilot still consumes more than using it within Copilot.
+
+#### First-Run Welcome Dialog
+
+Added a one-time welcome dialog on fresh installs to guide new users through the CC Switch workflow.
+
+- Explains how existing live configuration is preserved as a default provider
+- Introduces the bundled official preset that enables one-click revert to official endpoints
+- Upgrade users are automatically excluded via empty provider check
+
+#### Official Provider Seeding
+
+- Added automatic seeding of Claude Official, OpenAI Official, and Google Official provider entries on startup, giving every user a one-click path back to the official endpoint
+
+#### OpenCode / OpenClaw Auto-Import
+
+- Added automatic startup import of live OpenCode and OpenClaw provider configurations, matching the auto-import behavior already present for Claude, Codex, and Gemini
+
+#### Common Config Editor Guidance
+
+- Added an informational guide and empty-state prompt to the Common Config snippet editor modal for Claude, Codex, and Gemini
+- Added a one-time informational dialog explaining Common Config Snippets when users first open the provider add/edit form
+
+#### Claude Session Titles & Search Highlighting
+
+- Added meaningful title extraction for Claude sessions using a priority chain: custom-title metadata, first real user message, then directory basename fallback
+- Added keyword highlighting in session titles and messages during Session Manager search
+
+#### URL-Based Provider Icons
+
+- Added a dual rendering mode to the icon system: small SVGs are inlined as React components, while large SVGs and raster images (PNG, JPG, WebP) are loaded via Vite URL imports as `<img>` tags
+
+#### Kaku Terminal Support
+
+- Added Kaku as a selectable terminal for session launch on macOS, reusing the WezTerm-compatible launch path (#1983, thanks @yovinchen)
+
+#### OMO Slim Council Support
+
+- Restored first-class council support as a built-in oh-my-opencode-slim agent with updated metadata and UI copy (#1982, thanks @yovinchen)
+
+#### New Provider Presets
+
+- **TheRouter**: Added across Claude, Codex, Gemini, OpenCode, and OpenClaw (#1891, #1892, thanks @cmzz)
+- **DDSHub**: Added as a third-party partner provider for Claude with icon and partner promotion text
+- **LionCCAPI**: Added across all five apps with anthropic-messages protocol for OpenCode and OpenClaw
+- **Shengsuanyun (胜算云)**: Added as an aggregator partner provider across all five apps with URL-based icon and localized display name
+- **PIPELLM**: Added across Claude, Codex, OpenCode, and OpenClaw with full model definitions and icon
+- **E-FlowCode**: Added across all five apps with per-app protocol configuration
+
+### Changes
+
+#### Tray Menu Organization
+
+- Reworked the tray menu into per-application submenus (Claude / Codex / Gemini / OpenCode / OpenClaw)
+- Prevents overflow and scales to long provider lists
+
+#### Proxy Forwarding Stack
+
+Rebuilt the proxy forwarding layer on a Hyper-based HTTP client (#1714, thanks @yovinchen).
+
+- Transparent header forwarding: headers are forwarded without aggressive filtering
+- Improved endpoint rewriting logic
+- Better support for dynamic upstream endpoints
+- Paired with the new Full URL Endpoint Mode to unblock vendors with nonstandard URL layouts
+
+#### OAuth Auth Center UI Polish
+
+- Tightened the Auth Center copy, layout, and icon presentation so the Codex OAuth login flow feels cleaner and less cluttered
+
+#### Provider Key Lifecycle & Live Sync
+
+Reworked the additive provider create / rename / duplicate flows so live config writes, cleanup, and rollback stay consistent across OpenCode / OpenClaw and takeover scenarios (#1724, thanks @yovinchen).
+
+- Additive-mode highlight behavior made persistent across refreshes (#1747, thanks @yovinchen)
+- Consistent live config writes across OpenCode / OpenClaw
+- Rollback behavior preserved when operations fail
+
+#### Codex OAuth Defaults
+
+- Updated the Codex OAuth preset to the GPT-5.4 model family
+
+### Bug Fixes
+
+#### Copilot Authentication & Proxy Compatibility
+
+- Fixed GitHub Copilot authentication regressions (#1854, thanks @Mason-mengze)
+- Corrected enterprise and dynamic endpoint handling
+- Repaired clipboard verification-code copying on macOS and Linux
+- Fixed Responses routing when Copilot-backed Claude providers target OpenAI models (#1735, thanks @Mason-mengze)
+
+#### UTF-8 Stream Chunk Boundaries
+
+Fixed intermittent garbled output (U+FFFD replacement characters) in Claude Code when multi-byte UTF-8 sequences such as Chinese characters and emoji were split across TCP stream chunks via the Copilot reverse proxy (#1923, thanks @Cod1ng).
+
+- Replaced `String::from_utf8_lossy` with a new `append_utf8_safe` helper across all four SSE streaming paths
+- Preserves incomplete trailing bytes in a remainder buffer and merges them with the next chunk before decoding
+- Not reproducible with direct Copilot connections that pass through raw bytes without format conversion
+
+#### Fragmented System Prompt Normalization
+
+Fixed strict OpenAI-compatible chat backends (Nvidia, Qwen-style) rejecting requests when converted Claude payloads contained multiple system messages (#1942, thanks @yovinchen).
+
+- Normalized system content into a single leading system message during the Anthropic → OpenAI chat transformation
+- Leaves the rest of the message stream unchanged
+
+#### Streaming Parser Compatibility
+
+- Fixed SSE parsing to accept fields with optional spaces, improving compatibility with non-strict streaming implementations (#1664, thanks @Alexlangl)
+
+#### Provider Switch State Corruption
+
+- Serialized per-app provider switches to prevent concurrent failover or hot-switch operations from leaving `is_current`, settings state, and live backup state out of sync
+
+#### Claude Takeover Live Config Drift
+
+- Fixed provider edits while Claude takeover is active so live settings remain aligned with the latest provider state without breaking takeover restore behavior (#1828, thanks @geekdada)
+
+#### WebDAV Password Retention & Validation
+
+- Fixed the WebDAV password field so saved credentials remain visible after refresh
+- Treated `MKCOL 405` responses correctly during connection validation (#1685, thanks @Alexlangl)
+
+#### Provider Card Action States
+
+- Fixed additive-mode highlight behavior (#1747, thanks @yovinchen)
+- Aligned usage display layout across provider cards by always rendering action buttons
+- Replaced hard proxy-switch blocking with a warning path
+- Disabled unsupported test and usage actions for Copilot and Codex OAuth cards
+- Hid usage-config and health-check buttons for official providers
+- Removed the hover-push animation from provider cards
+
+#### Usage Accuracy & Pricing
+
+- Fixed MiniMax quota math and 0% → 100% progression
+- Corrected CNY → USD pricing plus missing model definitions
+- Improved Gemini session-log syncing accuracy
+- Resolved session-based usage entries being shown as unknown providers
+
+#### Usage Editor & Skills UI Regressions
+
+- Fixed usage query fields being reset while editing extractor code (#1771, thanks @if-nil)
+- Corrected broken `skills.sh` links and empty descriptions
+- Fixed auto-query default interval (5 min) and number-input clearing in usage configuration
+
+#### Chinese Skills Terminology
+
+- Unified Skills-related labels across settings panels in the `zh` locale so storage and sync options use consistent wording
+
+#### Environment & Preset Compatibility
+
+- Added Bun global bin detection in CLI scan (#1742, thanks @makoMakoGo)
+- Adapted to the oh-my-openagent rename with backward compatibility (#1746, thanks @yovinchen)
+- Corrected the OpenCode `kimi-for-coding` preset (#1738, thanks @makoMakoGo)
+- Gated Gemini keychain parsing to macOS only
+- Fixed an OpenClaw serializer panic on empty collections (#1724, thanks @yovinchen)
+
+#### Linux UI Unresponsive on Startup
+
+Fixed a long-standing Linux bug where the window UI (including native title bar buttons) couldn't receive clicks until the user manually maximized and restored the window.
+
+- **Root causes**: (1) Tauri webview did not acquire keyboard focus after `show()` on Linux, so the first click was consumed by X11/Wayland click-to-activate (Tauri #10746, wry #637); (2) GTK surface's input region failed to renegotiate on the `visible:false → show()` path under some WebKitGTK/compositor combinations, leaving the entire window unresponsive
+- **Mitigations**: Set `WEBKIT_DISABLE_COMPOSITING_MODE=1` at startup, and added a new `linux_fix::nudge_main_window` helper that performs `set_focus` + a ±1px no-op resize ~200ms after show, equivalent to a visually invisible "maximize-and-restore"
+- **Coverage**: Wired into all window-re-show paths — normal startup, deeplink, single_instance, tray `show_main`, and lightweight-mode exit
+
+#### Linux Drag Region on Header
+
+- Removed `data-tauri-drag-region` from the top header bar on Linux to avoid triggering `gtk_window_begin_move_drag` paths affected by Tauri #13440 under Wayland
+- macOS drag behavior is preserved
+
+#### OpenCode / OpenClaw Stream Check Edge Cases
+
+- Fixed custom-header passthrough
+- OpenClaw custom auth-header detection
+- Bedrock error messaging
+- OpenCode default `baseURL` fallback handling
+
+#### Duplicate Toast on Provider Switch
+
+- Fixed double toast notifications (proxy-required warning followed by switch-success) when switching to Copilot, ChatGPT, or OpenAI-format providers with the proxy not running
+
+#### Session Search Accuracy & Chinese Support
+
+- Fixed session search result truncation across providers
+- Switched FlexSearch tokenizer to full mode for proper Chinese substring matching
+
+#### Adaptive Thinking Reasoning Effort
+
+- Fixed `resolve_reasoning_effort()` mapping adaptive thinking to `xhigh` instead of incorrectly using `high` in OpenAI format conversions
+
+#### Thinking Model Fallback Display
+
+- Fixed the Claude provider form showing an empty Thinking model field after saving only a main model by applying read-only fallback to ANTHROPIC_MODEL (#1984, thanks @yovinchen)
+
+#### Auth Tab Localization
+
+- Fixed missing i18n translation keys for the settings auth tab label across all locale bundles (#1985, thanks @yovinchen)
+
+#### Schema Migration Guard
+
+- Fixed database migrations failing when skills or model_pricing tables did not exist by adding table-existence checks before ALTER and UPDATE operations
+
+### Documentation
+
+#### User Manual Refresh
+
+- Updated the EN / ZH / JA user manuals to cover tray submenus, lightweight mode, provider model fetching, session management, workspace files, WebDAV v2 behavior, OpenCode / OpenClaw activation, and other provider workflow improvements
+
+#### Community & Contribution Docs
+
+- Added `CONTRIBUTING.md`, `SECURITY.md`, and `CODE_OF_CONDUCT.md`
+- Added bilingual GitHub issue and PR templates
+- Added Dependabot configuration (#1829, thanks @bengbengbalabalabeng) and a stale-bot workflow for inactive issues
+- Added a PR / push quality-checks CI workflow
+
+#### Release Notes Risk Notice Backport
+
+- Added a Copilot reverse proxy risk notice and anchored highlight links in the v3.12.3 release notes across all three languages
+
+#### Sponsor Partners
+
+- Added Shengsuanyun, LionCC, and DDS as sponsor partners in README across all languages
+
+### ⚠️ Risk Notice
+
+**Codex OAuth Reverse Proxy Disclaimer**
+
+The Codex OAuth reverse proxy introduced in this release accesses ChatGPT Codex services through reverse-engineered OAuth flows. Please be aware of the following risks before enabling this feature:
+
+1. **Terms of Service**: Using reverse-engineered OAuth flows to access OpenAI services may violate OpenAI's terms of service, which prohibit unauthorized automated access, service reproduction, and circumventing intended access paths.
+2. **Account Risk**: OpenAI may flag unusual usage patterns as suspicious automated activity, potentially resulting in temporary or permanent restrictions on ChatGPT access.
+3. **No Guarantee**: OpenAI may update its authentication and detection mechanisms at any time, and usage patterns that work today may be flagged in the future.
+
+The **GitHub Copilot reverse proxy** introduced in v3.12.3 also remains subject to its existing risk notice — see the [v3.12.3 release notes](v3.12.3-en.md#️-risk-notice) for the full disclosure.
+
+Users enable these features **at their own risk**. CC Switch is not responsible for any account restrictions, warnings, or service suspensions resulting from the use of these features.
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 12 (Monterey) or later    | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                       | Description                                          |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `CC-Switch-v3.13.0-Windows.msi`            | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.13.0-Windows-Portable.zip`   | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                               | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.13.0-macOS.dmg`     | **Recommended** - DMG installer, drag to Applications, Universal Binary |
+| `CC-Switch-v3.13.0-macOS.zip`     | ZIP archive, extract and drag to Applications, Universal Binary      |
+| `CC-Switch-v3.13.0-macOS.tar.gz`  | For Homebrew installation and auto-update                            |
+
+> macOS builds are code-signed and notarized by Apple for a seamless install experience.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.12.3] - 2026-03-24
+
+> GitHub Copilot Reverse Proxy, macOS Code Signing & Notarization, Reasoning Effort Mapping, OpenCode SQLite Backend
+
+### Overview
+
+CC Switch v3.12.3 is a major feature release that adds GitHub Copilot reverse proxy support with a dedicated Auth Center, introduces macOS code signing and Apple notarization for a seamless install experience, maps reasoning effort levels across providers, migrates OpenCode to a SQLite backend, enables Tool Search via the native `ENABLE_TOOL_SEARCH` environment variable toggle, and delivers a full skill backup/restore lifecycle. Additional improvements include proxy gzip compression, o-series model compatibility, Skills import rework, Ghostty terminal fix, Skills cache strategy optimization, Claude 4.6 context window update, and multiple bug fixes.
+
+### Highlights
+
+- **GitHub Copilot reverse proxy**: Full Copilot proxy support with OAuth device flow authentication, token refresh, and request fingerprint emulation ([⚠️ Risk Notice](#️-risk-notice))
+- **Copilot Auth Center**: Dedicated authentication management UI for GitHub Copilot OAuth flow with token status display and one-click refresh
+- **macOS code signing & notarization**: macOS builds are now code-signed and notarized by Apple, eliminating the "unidentified developer" warning entirely
+- **Reasoning Effort mapping**: Proxy-layer auto-mapping — explicit `output_config.effort` takes priority, falling back to `budget_tokens` thresholds (<4 000→low, 4 000–16 000→medium, ≥16 000→high) for o-series and GPT-5+ models
+- **OpenCode SQLite backend**: Added SQLite session storage for OpenCode alongside existing JSON backend; dual-backend scan with SQLite priority on ID conflicts
+- **Codex 1M context window toggle**: One-click checkbox to set `model_context_window = 1000000` with auto-populated `model_auto_compact_token_limit`
+- **Disable Auto-Upgrade toggle**: Added `DISABLE_AUTOUPDATER` env var checkbox in the Claude Common Config editor to prevent Claude Code from auto-upgrading
+- **Tool Search env var toggle**: Tool Search enabled via Claude 2.1.76+ native `ENABLE_TOOL_SEARCH` environment variable in the Common Config editor — no binary patching required
+- **Skill backup/restore lifecycle**: Skills are automatically backed up before uninstall; backup list with restore and delete management added
+- **Proxy gzip compression**: Non-streaming proxy requests now auto-negotiate gzip compression, reducing bandwidth usage
+- **o-series model compatibility**: Chat Completions proxy correctly uses `max_completion_tokens` for o1/o3/o4-mini models; Responses API kept on the correct `max_output_tokens` field
+- **Skills import rework**: Replaced implicit filesystem-based app inference with explicit `ImportSkillSelection` to prevent incorrect multi-app activation
+- **Ghostty terminal support**: Fixed Claude session restore in Ghostty terminal
+
+### New Features
+
+#### GitHub Copilot Reverse Proxy
+
+Added full reverse proxy support for GitHub Copilot, enabling Copilot-authenticated requests to be forwarded through CC Switch.
+
+- Implements OAuth device flow authentication for GitHub Copilot
+- Automatic token refresh and session management
+- Request fingerprint emulation for seamless compatibility
+- Integrated into the existing proxy infrastructure alongside Claude, Codex, and Gemini handlers
+
+#### Copilot Auth Center
+
+A dedicated authentication management UI for GitHub Copilot.
+
+- OAuth device flow with code display and browser-based authorization
+- Token status display showing expiration and validity
+- One-click token refresh without re-authentication
+- Integrated into the settings panel for easy access
+
+#### Reasoning Effort Mapping
+
+Proxy-layer auto-mapping of reasoning effort for OpenAI o-series and GPT-5+ models.
+
+- Two-tier resolution: explicit `output_config.effort` takes priority, falling back to thinking `budget_tokens` thresholds (<4 000→low, 4 000–16 000→medium, ≥16 000→high)
+- Covers both Chat Completions and Responses API paths with 17 unit tests
+
+#### OpenCode SQLite Backend
+
+Added SQLite session storage support for OpenCode alongside the existing JSON backend.
+
+- Dual-backend scan with SQLite priority on ID conflicts
+- Atomic session deletion and path validation
+- JSON backend remains functional for backwards compatibility
+
+#### Codex 1M Context Window Toggle
+
+Added a one-click toggle for Codex 1M context window in the config editor.
+
+- Checkbox sets `model_context_window = 1000000` in `config.toml`
+- Auto-populates `model_auto_compact_token_limit = 900000` when enabled
+- Unchecking removes both fields cleanly
+
+#### Disable Auto-Upgrade Toggle
+
+Added a checkbox in the Claude Common Config editor to disable Claude Code auto-upgrades.
+
+- Sets `DISABLE_AUTOUPDATER=1` in the environment configuration when enabled
+- Displayed alongside Teammates mode, Tool Search, and High Effort toggles
+
+#### Tool Search Environment Variable Toggle
+
+Tool Search is now enabled via the native `ENABLE_TOOL_SEARCH` environment variable introduced in Claude 2.1.76+.
+
+- Toggle available in the Common Config editor under environment variables
+- Sets `ENABLE_TOOL_SEARCH=1` in the Claude environment configuration
+- No binary patching required — uses Claude's built-in support
+
+#### macOS Code Signing & Notarization
+
+macOS builds are now code-signed and notarized by Apple.
+
+- Application signed with a valid Apple Developer certificate
+- Notarized through Apple's notarization service for Gatekeeper approval
+- DMG installer also signed and notarized
+- Eliminates the "unidentified developer" warning on first launch
+
+#### Skill Auto-Backup on Uninstall
+
+Skill files are now automatically backed up before uninstall to prevent accidental data loss.
+
+- Backups stored in `~/.cc-switch/skill-backups/` with all skill files and a `meta.json` containing original metadata
+- Old backups are automatically pruned to keep at most 20
+- Backup path is returned to the frontend and shown in the success toast
+
+#### Skill Backup Restore & Delete
+
+Added management commands for skill backups created during uninstall.
+
+- List all available skill backups with metadata
+- Restore copies files back to SSOT, saves the DB record, and syncs to the current app with rollback on failure
+- Delete removes the backup directory after a confirmation dialog
+- ConfirmDialog gains a configurable zIndex prop to support nested dialog stacking
+
+### Changes
+
+#### Skills Cache Strategy Optimization
+
+Optimized the Skills cache invalidation strategy for better performance.
+
+- Reduced unnecessary cache refreshes during skill operations
+- Improved cache coherence between skill install/uninstall and list queries
+
+#### Claude 4.6 Context Window Update
+
+Updated Claude 4.6 model preset with the latest context window size.
+
+- Reflects the expanded context window for Claude 4.6 models
+- Updated in provider presets for accurate model information display
+
+#### MiniMax M2.7 Upgrade
+
+- Updated MiniMax provider preset to M2.7 model variant
+
+#### Xiaomi MiMo Upgrade
+
+- Updated Xiaomi MiMo provider preset to the latest model version
+
+#### AddProviderDialog Simplification
+
+- Removed redundant OAuth tab, reducing dialog from 3 tabs to 2 (app-specific + universal)
+
+#### Provider Form Advanced Options Collapse
+
+- Model mapping, API format, and other advanced fields in the Claude provider form now auto-collapse when empty
+- Auto-expands when any value is set or when a preset fills them in; does not auto-collapse when manually cleared
+
+#### Proxy Gzip Compression
+
+Non-streaming proxy requests now support gzip compression for reduced bandwidth usage.
+
+- Non-streaming requests let reqwest auto-negotiate gzip and transparently decompress responses
+- Streaming requests conservatively keep `Accept-Encoding: identity` to avoid decompression errors on interrupted SSE streams
+
+#### o1/o3 Model Compatibility
+
+Proxy forwarding now handles OpenAI o-series model token parameters correctly.
+
+- Chat Completions path uses `max_completion_tokens` instead of `max_tokens` for o1/o3/o4-mini models (#1451, thanks @Hemilt0n)
+- Responses API path kept on the correct `max_output_tokens` field instead of incorrectly injecting `max_completion_tokens`
+
+#### OpenCode Model Variants
+
+- Placed OpenCode model variants at top level instead of inside options for better discoverability (#1317)
+
+#### Skills Import Flow
+
+The Skills import flow has been reworked for correctness and cleanup.
+
+- Replaced implicit filesystem-based app inference with explicit `ImportSkillSelection` to prevent incorrect multi-app activation when the same skill directory exists under multiple app paths
+- Added reconciliation to `sync_to_app` to remove disabled/orphaned symlinks
+- MCP `sync_all_enabled` now removes disabled servers from live config
+- Schema migration preserves a snapshot of legacy app mappings to avoid lossy reconstruction
+
+### Bug Fixes
+
+#### WebDAV Password Clearing
+
+- Fixed an issue where the WebDAV password was silently cleared when saving unrelated settings
+
+#### Tool Message Parsing
+
+- Fixed incorrect parsing of tool-use messages in certain proxy response formats
+
+#### Dark Mode Styling
+
+- Fixed dark mode rendering inconsistencies in UI components
+
+#### Copilot Request Fingerprint
+
+- Fixed request fingerprint generation for Copilot proxy to match expected format
+
+#### Provider Form Double Submit
+
+- Prevented duplicate submissions on rapid button clicks in provider add/edit forms (#1352, thanks @Hexi1997)
+
+#### Ghostty Session Restore
+
+- Fixed Claude session restore in Ghostty terminal (#1506, thanks @canyonsehun)
+
+#### Skill ZIP Import Extension
+
+- Added `.skill` file extension support in ZIP import dialog (#1240, #1455, thanks @yovinchen)
+
+#### Skill ZIP Install Target App
+
+- ZIP skill installs now use the currently active app instead of always defaulting to Claude
+
+#### OpenClaw Active Card Highlight
+
+- Fixed active OpenClaw provider card not being highlighted (#1419, thanks @funnytime75)
+
+#### Responsive Layout with TOC
+
+- Improved responsive design when TOC title exists (#1491, thanks @West-Pavilion)
+
+#### Import Skills Dialog White Screen
+
+- Added missing TooltipProvider in ImportSkillsDialog to prevent runtime crash when opening the dialog
+
+#### Panel Bottom Blank Area
+
+- Replaced hardcoded `h-[calc(100vh-8rem)]` with `flex-1 min-h-0` across all content panels to eliminate bottom gap caused by mismatched offset values on different platforms
+
+### Documentation
+
+#### Pricing Model ID Normalization
+
+- Added documentation section explaining model ID normalization rules (prefix stripping, suffix trimming, `@`→`-` replacement) in EN/ZH/JA user manuals (#1591, thanks @makoMakoGo)
+
+#### macOS Signed Build Messaging
+
+- Removed all `xattr` workaround instructions and "unidentified developer" warnings from README, README_ZH, installation guides (EN/ZH/JA), and FAQ pages (EN/ZH/JA); replaced with "signed and notarized by Apple" messaging
+
+### ⚠️ Risk Notice
+
+**GitHub Copilot Reverse Proxy Disclaimer**
+
+The Copilot reverse proxy feature introduced in this release accesses GitHub Copilot services through reverse-engineered, unofficial APIs. Please be aware of the following risks before enabling this feature:
+
+1. **Terms of Service**: This feature may violate [GitHub's Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies) and [Terms for Additional Products and Features](https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features), which prohibit excessive automated bulk activity, unauthorized service reproduction, and placing undue burden on servers through automated means.
+2. **Account Risk**: There are documented cases of GitHub issuing warning emails to users of similar tools, citing "scripted interactions or otherwise deliberately unusual or strenuous" usage patterns. Continued use after a warning may result in temporary or permanent suspension of Copilot access.
+3. **No Guarantee**: GitHub may update its detection mechanisms at any time, and usage patterns that work today may be flagged in the future.
+
+Users enable this feature **at their own risk**. CC Switch is not responsible for any account restrictions, warnings, or service suspensions resulting from the use of this feature.
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 12 (Monterey) or later    | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                       | Description                                          |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `CC-Switch-v3.12.3-Windows.msi`            | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.12.3-Windows-Portable.zip`   | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                               | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.12.3-macOS.dmg`     | **Recommended** - DMG installer, drag to Applications, Universal Binary |
+| `CC-Switch-v3.12.3-macOS.zip`     | ZIP archive, extract and drag to Applications, Universal Binary      |
+| `CC-Switch-v3.12.3-macOS.tar.gz`  | For Homebrew installation and auto-update                            |
+
+> macOS builds are code-signed and notarized by Apple for a seamless install experience.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.12.2] - 2026-03-12
+
+> Common Config Protection During Proxy Takeover, Snippet Lifecycle Stability, Section-Aware Codex TOML Editing
+
+### Overview
+
+CC Switch v3.12.2 is a reliability-focused patch release that addresses Common Config loss during proxy takeover and improves Codex TOML editing accuracy. Proxy takeover hot-switches and provider sync now update the restore backup instead of overwriting live config files; the startup sequence has been reordered so snippets are extracted from clean live files before takeover state is restored; and Codex `base_url` editing has been refactored into a section-aware model that no longer appends to the end of the file.
+
+### Highlights
+
+- **Empty state guidance**: Provider list empty state now shows detailed import instructions with a conditional Common Config snippet hint for Claude/Codex/Gemini
+
+- **Proxy takeover restore flow rework**: Hot-switches and provider sync now refresh the restore backup instead of overwriting live config files, preserving the full user configuration on rollback
+- **Snippet lifecycle stability**: Introduced a `cleared` flag to prevent auto-extraction from resurrecting cleared snippets, and reordered startup to extract from clean state
+- **Section-aware Codex TOML editing**: `base_url` and `model` field reads/writes now target the correct `[model_providers.<name>]` section
+- **Codex MCP config protection**: Existing `mcp_servers` blocks in restore snapshots survive provider hot-switches via per-server-id merge instead of wholesale replacement, with provider/common-config definitions winning on conflict
+
+### New Features
+
+#### Empty State Guidance
+
+Improved the first-run experience with helpful guidance when the provider list is empty.
+
+- Empty state page shows step-by-step import instructions
+- Conditionally displays a Common Config snippet hint for Claude/Codex/Gemini providers (not shown for OpenCode/OpenClaw)
+
+### Changes
+
+#### Proxy Takeover Restore Flow
+
+The proxy takeover hot-switch and provider sync logic has been reworked to protect Common Config throughout the takeover lifecycle.
+
+- Provider sync now updates the restore backup instead of writing directly to live config files when takeover is active
+- Effective provider settings are rebuilt with Common Config applied before saving restore snapshots, so rollback restores the real user configuration
+- Legacy providers with inferred common config usage are automatically marked with `commonConfigEnabled=true`
+
+#### Codex TOML Editing Engine
+
+Codex `config.toml` update logic has been refactored onto shared section-aware TOML helpers.
+
+- New Rust module `codex_config.rs` with `update_codex_toml_field` and `remove_codex_toml_base_url_if`
+- New frontend utilities `getTomlSectionRange` / `getCodexProviderSectionName` for section-aware operations
+- Inline TOML editing logic scattered across `proxy.rs` now delegates to the new module
+
+#### Common Config Initialization Lifecycle
+
+The startup sequence has been reordered for more robust snippet extraction and migration.
+
+- Startup now auto-extracts Common Config snippets from clean live files before restoring proxy takeover state
+- Introduced a snippet `cleared` flag to track whether a user intentionally cleared a snippet
+- Persisted a one-time legacy migration flag to avoid repeated `commonConfigEnabled` backfills
+
+### Bug Fixes
+
+#### Common Config Loss
+
+- Fixed multiple scenarios where Common Config could be dropped during proxy takeover: sync overwriting live files, hot-switches producing incomplete restore snapshots, and provider switches losing config changes
+
+#### Codex Restore Snapshot Preservation
+
+- Fixed Codex takeover restore backups discarding existing `mcp_servers` blocks during provider hot-switches; changed MCP backup preservation from wholesale table replacement to per-server-id merge so provider/common-config MCP updates win on conflict while backup-only servers are retained
+
+#### Cleared Snippet Resurrection
+
+- Fixed startup auto-extraction recreating Common Config snippets that users had intentionally cleared
+
+#### Codex `base_url` Misplacement
+
+- Fixed Codex `base_url` extraction and editing not targeting the correct `[model_providers.<name>]` section, causing it to append to the file tail or confuse `mcp_servers.*.base_url` entries for provider endpoints
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                       | Description                                          |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `CC-Switch-v3.12.2-Windows.msi`            | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.12.2-Windows-Portable.zip`   | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                               | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.12.2-macOS.zip`      | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.12.2-macOS.tar.gz`   | For Homebrew installation and auto-update                            |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" -> "Privacy & Security" -> click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.12.1] - 2026-03-12
+
+> Stability Fixes, StepFun Presets, OpenClaw authHeader, and New Sponsor Partners
+
+### Overview
+
+CC Switch v3.12.1 is a patch release focused on stability improvements and bug fixes. It resolves a Common Config modal infinite reopen loop, a WebDAV sync foreign key constraint failure, and several i18n interpolation issues. It also adds **StepFun** provider presets, **OpenClaw input type selection** and **authHeader** support, upgrades the default Gemini model to **3.1-pro**, and welcomes four new sponsor partners.
+
+### Highlights
+
+- **Common Config modal fix**: Resolved an infinite reopen loop in the Common Config modal and added draft editing support
+- **WebDAV sync reliability**: Fixed a foreign key constraint failure when restoring `provider_health` during WebDAV sync
+- **StepFun presets**: Added StepFun (阶跃星辰) provider presets including the step-3.5-flash model
+- **OpenClaw enhancements**: Added input type selection for model Advanced Options and `authHeader` field for vendor-specific auth header support
+- **Gemini model upgrade**: Upgraded default Gemini model to 3.1-pro in provider presets
+- **New sponsors**: Welcomed Micu API, XCodeAPI, SiliconFlow, and CTok as sponsor partners
+
+### New Features
+
+#### StepFun Provider Presets
+
+Added provider presets for StepFun (阶跃星辰), a leading Chinese AI model provider.
+
+- New preset entries for StepFun across supported applications
+- Includes the step-3.5-flash model (#1369, thanks @hengm3467)
+
+#### OpenClaw Enhancements
+
+Enhanced the OpenClaw configuration with more granular control and better vendor compatibility.
+
+- Added input type selection dropdown for model Advanced Options (#1368, thanks @liuxxxu)
+- Added optional `authHeader` boolean to `OpenClawProviderConfig` for vendor-specific auth header support (e.g. Longcat), and refactored form state to reuse the shared type
+
+#### Sponsor Partners
+
+- **Micu API**: Added Micu API as sponsor partner with affiliate links
+- **XCodeAPI**: Added XCodeAPI as sponsor partner
+- **SiliconFlow**: Added SiliconFlow (硅基流动) as sponsor partner with affiliate links
+- **CTok**: Added CTok as sponsor partner
+
+### Changes
+
+- **UCloud → Compshare**: Renamed UCloud provider to Compshare (优云智算) with full i18n support across all three locales (EN/ZH/JA)
+- **Compshare Links**: Updated Compshare sponsor registration links to coding-plan page
+- **Gemini Model Upgrade**: Upgraded default Gemini model from 2.5-pro to 3.1-pro in provider presets
+
+### Bug Fixes
+
+#### Common Config & UI
+
+- Fixed an infinite reopen loop in the Common Config modal and added draft editing support to prevent data loss during edits
+- Fixed toolbar compact mode not triggering on Windows due to left-side overflow (#1375, thanks @zuoliangyu)
+- Fixed session search index not syncing with query data, causing stale list display after session deletion
+
+#### Sync & Data
+
+- Fixed foreign key constraint failure when restoring `provider_health` table during WebDAV sync
+
+#### Provider & Preset
+
+- Added missing `authHeader: true` to Longcat provider preset (#1377, thanks @wavever)
+- Aligned OpenClaw tool permission profiles with upstream schema (#1355, thanks @bigsongeth)
+- Corrected X-Code API URL from `www.x-code.cn` to `x-code.cc`
+
+#### i18n & Localization
+
+- Fixed stream check toast i18n interpolation keys not matching translation placeholders
+- Fixed proxy startup toast not interpolating address and port values (#1399, thanks @Mason-mengze)
+- Renamed OpenCode API format label from "OpenAI" to "OpenAI Responses" for accuracy
+
+### Special Thanks
+
+Thanks to all contributors for their contributions to this release!
+
+@hengm3467 @liuxxxu @bigsongeth @zuoliangyu @wavever @Mason-mengze
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                       | Description                                          |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `CC-Switch-v3.12.1-Windows.msi`            | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.12.1-Windows-Portable.zip`   | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                               | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.12.1-macOS.zip`      | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.12.1-macOS.tar.gz`   | For Homebrew installation and auto-update                            |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" -> "Privacy & Security" -> click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.12.0] - 2026-03-09
+
+> Stream Check Returns, OpenAI Responses API Arrives, and OpenClaw / WebDAV Get a Major Upgrade
+
+### Overview
+
+CC Switch v3.12.0 is a feature release focused on provider compatibility, OpenClaw editing, Common Config usability, and sync/data reliability. It restores the **Model Health Check (Stream Check)** UI with improved stability, adds **OpenAI Responses API** format conversion, expands provider presets for **Ucloud**, **Micu**, **X-Code API**, **Novita**, and **Bailian For Coding**, and upgrades **WebDAV sync** with dual-layer versioning.
+
+### Highlights
+
+- **Stream Check returns**: Restored the model health check UI, added first-run confirmation, and fixed `openai_chat` provider support
+- **OpenAI Responses API**: Added `api_format = "openai_responses"` with bidirectional conversion and shared conversion cleanup — simply select the Responses API format when adding a provider and enable proxy takeover, and you can use GPT-series models in Claude Code!
+- **OpenClaw overhaul**: Introduced JSON5 round-trip config editing, a config health banner, better agent model selection, and a User-Agent toggle
+- **Preset expansion**: Added Ucloud, Micu, X-Code API, Novita, and Bailian For Coding updates, plus SiliconFlow partner badge and model-role badges
+- **Sync and maintenance improvements**: Added WebDAV protocol v2 + db-v6 versioning, daily rollups, incremental auto-vacuum, and sync-aware backup
+- **Common Config usability improvements**: After updating a Common Config Snippet, it is now automatically applied when switching providers — no more manual checkbox needed
+
+### Main Features
+
+#### Model Health Check (Stream Check)
+
+Restored the Stream Check panel for live provider validation, improving the reliability of provider management.
+
+- Restored Stream Check UI panel with single and batch provider availability testing
+- Added first-run confirmation dialog to prevent unsupported providers from showing misleading errors
+- Fixed detection compatibility for `openai_chat` API format providers
+
+#### OpenAI Responses API
+
+Added native support for providers using the OpenAI Responses API with a new `openai_responses` API format.
+
+- New `api_format = "openai_responses"` provider format option
+- Bidirectional Anthropic Messages <-> OpenAI Responses API format conversion
+- Consolidated shared conversion logic to reduce code duplication
+
+#### Bedrock Request Optimizer
+
+Added a PRE-SEND phase request optimizer for AWS Bedrock providers to improve compatibility and performance.
+
+- PRE-SEND thinking + cache injection optimizer (#1301, thanks @keithyt06)
+
+#### OpenClaw Config Enhancements
+
+Comprehensive upgrade to the OpenClaw configuration editing experience with richer management capabilities.
+
+- JSON5 round-trip write-back: preserves comments and formatting when editing configs
+- EnvPanel JSON editing mode and `tools.profile` selection support
+- New config validation warnings and config health status checks
+- Improved agent model dropdown with recommended model fill from provider presets
+- User-Agent toggle: optionally append OpenClaw identifier to requests (defaults to off)
+- Legacy timeout configuration auto-migration
+
+#### Provider Presets
+
+New and expanded provider presets covering more providers and use cases.
+
+- **Ucloud**: Added `endpointCandidates` and OpenClaw defaults, refreshed `templateValues` / `suggestedDefaults`
+- **Micu**: Added preset defaults and OpenClaw recommended models
+- **X-Code API**: Added Claude presets and `endpointCandidates`
+- **Novita**: New provider preset (#1192, thanks @Alex-wuhu)
+- **Bailian For Coding**: New provider preset (#1263, thanks @suki135246)
+- **SiliconFlow**: Added partner badge
+- **Model Role Badges**: Provider presets now support model-role badge display
+
+#### WebDAV Sync Enhancements
+
+WebDAV sync introduces dual-layer versioning for improved sync reliability and data safety.
+
+- New WebDAV protocol v2 + db-v6 dual-layer versioning
+- Confirmation dialog when toggling WebDAV auto-sync on/off to prevent accidental changes
+- Sync-aware backup: uses a sync-specific backup variant that skips local-only table data
+
+#### Usage & Data
+
+Enhanced usage statistics and data maintenance capabilities for finer-grained data management, significantly reducing database growth rate.
+
+- Daily rollups: aggregate usage data by day to reduce storage overhead
+- Auto-vacuum: incremental database cleanup to maintain database health
+- UsageFooter extra statistics fields (#1137, thanks @bugparty)
+
+#### Other New Features
+
+- **Session Deletion**: Per-provider session cleanup with path safety validation
+- **Claude Auth Field Selector**: Restored authentication field selector
+- **Failover Toggle on Main Page**: Moved the failover toggle to display independently on the main page with a first-use confirmation dialog
+- **Common Config Auto-Extract**: On first run, automatically extracts common config snippets from live config files
+- **New Provider Page Improvements**: Improved new provider page experience (#1155, thanks @wugeer)
+
+### Architecture Improvements
+
+#### Common Config Runtime Overlay
+
+Common Config Snippets are now applied as a runtime overlay instead of being materialized into stored provider configs.
+
+**Before**: Common Config content was merged directly into each provider's `settings_config` on save or switch. This caused shared configuration to be duplicated across every provider entry, requiring manual sync when changes were needed.
+
+**After**: Common Config is only injected as a runtime overlay when switching providers and writing to the live file — provider entries themselves no longer contain shared configuration. This means modifying Common Config takes effect immediately without updating each provider individually.
+
+#### Common Config Auto-Extract
+
+On first run, if no Common Config Snippet exists in the database, one is automatically extracted from the current live config. This ensures users upgrading from older versions do not lose their existing shared configuration settings.
+
+#### Periodic Maintenance Timer Consolidation
+
+Consolidated daily rollups and auto-vacuum into a unified periodic maintenance timer, eliminating resource contention and complexity from multiple independent timers.
+
+### Bug Fixes
+
+#### Proxy & Streaming
+
+- Fixed OpenAI ChatCompletion -> Anthropic Messages streaming conversion
+- Added Codex `/responses/compact` route support (#1194, thanks @Tsukumi233)
+- Improved TOML config merge logic to prevent key-value loss
+- Improved proxy forwarder failure logs with additional diagnostic information
+
+#### Provider & Preset Fixes
+
+- Renamed X-Code to X-Code API for consistent branding
+- Fixed SSSAiCode `/v1` path issue
+- Removed incorrect `www` prefix from AICoding URLs
+- Fixed new provider page line-break deletion issue (#1155, thanks @wugeer)
+
+#### Platform Fixes
+
+- Fixed cache hit token statistics not being reported (#1244, thanks @a1398394385)
+- Fixed minimize-to-tray causing auto exit after some time (#1245, thanks @YewFence)
+
+#### i18n Fixes
+
+- Added 69 missing translation keys and removed remaining hardcoded Chinese strings
+- Fixed model test panel i18n issues
+- Normalized JSON5 slash escaping to prevent i18n string parsing errors
+
+#### UI Fixes
+
+- Fixed Skills count display (#1295, thanks @fzzv)
+- Removed HTTP status code display from endpoint speed test to reduce visual noise
+- Fixed outline button styling (#1222, thanks @Sube-py)
+
+### Performance
+
+- Skip unnecessary OpenClaw config writes when config is unchanged, reducing disk I/O
+
+### Documentation
+
+- Restructured the user manual for i18n and added complete EN/JA coverage
+- Added OpenClaw usage documentation and completed settings documentation
+- Added UCloud sponsor information
+- Reorganized the docs directory and synced README feature sections across EN/ZH/JA
+
+### Notes & Considerations
+
+- **Common Config now uses runtime overlay**: Common Config Snippets are no longer materialized into each provider's stored config. They are dynamically applied at switch time. Modifying Common Config takes effect immediately without updating each provider.
+- **Stream Check requires first-use confirmation**: A confirmation dialog appears when using the model health check for the first time. Testing proceeds only after confirmation.
+- **OpenClaw User-Agent toggle defaults to off**: The User-Agent identifier must be manually enabled in the OpenClaw configuration.
+
+### Special Thanks
+
+Thanks to all contributors for their contributions to this release!
+
+@keithyt06 @bugparty @Alex-wuhu @suki135246 @Tsukumi233 @wugeer @fzzv @Sube-py @a1398394385 @YewFence
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `CC-Switch-v3.12.0-Windows.msi`          | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.12.0-Windows-Portable.zip` | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                             | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.12.0-macOS.zip`    | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.12.0-macOS.tar.gz` | For Homebrew installation and auto-update                            |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" -> "Privacy & Security" -> click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.11.1] - 2026-02-28
+
+> Revert Partial Key-Field Merging, Restore Common Config Snippet & Bug Fixes
+
+### Overview
+
+CC Switch v3.11.1 is a hotfix release that reverts the **Partial Key-Field Merging** architecture introduced in v3.11.0, restoring the proven "**full config overwrite + Common Config Snippet**" mechanism. It also includes several UI and platform compatibility fixes.
+
+### Highlights
+
+- **Restore Full Config Overwrite + Common Config Snippet**: Reverted partial key-field merging due to critical data loss issues; restores full config snapshot write and Common Config Snippet UI
+- **Proxy Panel Improvements**: Proxy toggle moved into panel body for better discoverability of takeover options
+- **Theme & Compact Mode Fixes**: "Follow System" theme now auto-updates; compact mode exit works correctly
+- **Windows Compatibility**: Disabled env check and one-click install to prevent protocol handler side effects
+
+### Reverted
+
+#### Restore Full Config Overwrite + Common Config Snippet
+
+Reverted the partial key-field merging refactoring introduced in v3.11.0 (revert 992dda5c).
+
+**Why reverted**: The partial key-field merging approach had three critical issues:
+1. **Data loss on switch**: Non-whitelisted custom fields were silently dropped during provider switching
+2. **Permanent backfill stripping**: Backfill permanently removed non-key fields from the database, causing irreversible data loss
+3. **Maintenance burden**: The whitelist of "key fields" required constant maintenance as new config keys were added
+
+**What's restored**:
+- Full config snapshot write on provider switch (predictable, complete overwrite)
+- Common Config Snippet UI and backend commands
+- 6 frontend components/hooks (3 components + 3 hooks)
+
+**Migration**:
+- If you upgraded to v3.11.0 and your providers lost custom fields, re-import your config or manually re-add the missing fields
+- Common Config Snippet is available again — use it to define shared config that should persist across provider switches
+
+### Changed
+
+- **Proxy Panel Layout**: Moved proxy on/off toggle from accordion header into panel content area, placed directly above app takeover options. This ensures users see takeover configuration immediately after enabling the proxy, avoiding the common mistake of enabling the proxy without configuring takeover
+- **Manual Import for OpenCode/OpenClaw**: Removed auto-import on startup; empty state now shows an "Import Current Config" button, consistent with Claude/Codex/Gemini behavior
+
+### Fixed
+
+- **"Follow System" Theme Not Auto-Updating**: Delegated to Tauri's native theme tracking (`set_window_theme(None)`) so the WebView's `prefers-color-scheme` media query stays in sync with OS theme changes
+- **Compact Mode Cannot Exit**: Restored `flex-1` on `toolbarRef` so `useAutoCompact`'s exit condition triggers correctly based on available width instead of content width
+- **Proxy Takeover Toast Shows {{app}}**: Added missing `app` interpolation parameter to i18next `t()` calls for proxy takeover enabled/disabled messages
+- **Windows Protocol Handler Side Effects**: Disabled environment check and one-click install on Windows to prevent unintended protocol handler registration
+
+### Notes & Considerations
+
+- **Common Config Snippet is back**: If you relied on this feature in v3.10.x and earlier, it works the same way again. Define shared config that should persist across all provider switches.
+- **v3.11.0 Partial Key-Field Merging users**: If you noticed missing config fields after switching providers in v3.11.0, re-import your config to restore them.
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `CC-Switch-v3.11.1-Windows.msi`          | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.11.1-Windows-Portable.zip` | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                             | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.11.1-macOS.zip`    | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.11.1-macOS.tar.gz` | For Homebrew installation and auto-update                            |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" → "Privacy & Security" → click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.11.0] - 2026-02-26
+
+> OpenClaw Support, Session Manager, Backup Management & 50+ Improvements
+
+### Overview
+
+CC Switch v3.11.0 is a major update that adds full management support for **OpenClaw** as the fifth application, introduces a new **Session Manager** and **Backup Management** feature. Additionally, **Oh My OpenCode (OMO) integration**, the **partial key-field merging** architecture upgrade for provider switching, **settings page refactoring**, and many other improvements make the overall experience more polished.
+
+### Highlights
+
+- **OpenClaw Support**: Fifth managed application with 13 provider presets, Env/Tools/AgentsDefaults config editors, and Workspace file management
+- **Session Manager**: Browse conversation history across all five apps with table-of-contents navigation and in-session search
+- **Backup Management**: Independent backup panel with configurable policies, periodic backups, and pre-migration auto-backup
+- **Oh My OpenCode Integration**: Full OMO config management with OMO Slim lightweight mode support
+- **Partial Key-Field Merging (⚠️ Breaking Change)**: Provider switching now only replaces provider-related fields, preserving all other settings; the "Common Config Snippet" feature has been removed
+- **Settings Page Refactoring**: 5-tab layout with ~40% code reduction
+- **6 New Provider Presets**: AWS Bedrock, SSAI Code, CrazyRouter, AICoding, and more
+- **Thinking Budget Rectifier**: Fine-grained thinking budget control
+- **Theme Switch Animation**: Circular reveal transition animation
+- **WebDAV Auto Sync**: Automatic sync with large file protection
+
+### Main Features
+
+#### OpenClaw Support (New Fifth App)
+
+Full management support for OpenClaw, the fifth managed application following Claude Code, Codex, Gemini CLI, and OpenCode.
+
+- **Provider Management**: Add, edit, switch, and delete OpenClaw providers with 13 built-in presets
+- **Config Editors**: Three dedicated panels for Env (environment variables), Tools, and AgentsDefaults
+- **Workspace Panel**: HEARTBEAT/BOOTSTRAP/BOOT file management and daily memory
+- **Additive Overlay Mode**: Support config overlay instead of overwrite
+- **Default Model Button**: One-click to fill recommended models; auto-register suggested models to allowlist when adding providers
+- **Brand & Interaction**: Dedicated brand icon, fade-in/fade-out transition animation when switching apps
+- **Deep Link Support**: Import OpenClaw provider configurations via URL
+- **Full Internationalization**: Complete Chinese/English/Japanese support
+
+#### Session Manager
+
+A brand-new session manager to browse and search conversation history.
+
+- Browse conversation history across Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw (#867, thanks @TinsFox)
+- Table-of-contents navigation and in-session search
+- Auto-filter by current app when entering the session page
+- Parallel directory scanning + head-tail JSONL reading for optimized loading performance
+
+#### Backup Management
+
+An independent backup management panel for better data safety.
+
+- Configurable backup policy: maximum backup count and auto-cleanup rules
+- Hourly automatic backup timer during runtime
+- Auto-backup before database schema migrations with backfill warning
+- Support backup rename and deletion (with confirmation dialog)
+- Backup filenames use local time for better clarity
+
+#### Oh My OpenCode (OMO) Integration
+
+Full Oh My OpenCode config file management.
+
+- Agent model selection, category configuration, and recommended model fill (#972, thanks @yovinchen)
+- Improved agent model selection UX with lowercase key fix (#1004, thanks @yovinchen)
+- OMO Slim lightweight mode support
+- OMO ↔ OMO Slim mutual exclusion (enforced at database level)
+
+#### Workspace
+
+- Full-text search across daily memory files, sorted by date
+- Clickable directory paths for quick file location access
+
+#### Toolbar
+
+- AppSwitcher auto-collapses to compact mode based on available width
+- Smooth transition animation for compact mode toggle
+
+#### Settings
+
+- First-use confirmation dialogs for proxy and usage features to prevent accidental operations
+- New `enableLocalProxy` switch to control proxy UI visibility on home page
+- More granular local environment checks: CLI tool version detection (#870, thanks @kv-chiu), Volta path detection (#969, thanks @myjustify)
+
+#### Provider Presets
+
+- **AWS Bedrock**: Support for AKSK and API Key authentication modes (#1047, thanks @keithyt06)
+- **SSAI Code**: Partner preset across all five apps
+- **CrazyRouter**: Partner preset with dedicated icon
+- **AICoding**: Partner preset with i18n promotion text
+- Updated domestic model provider presets to latest versions
+- Renamed Qwen Coder to Bailian (#965, thanks @zhu-jl18)
+
+#### Other New Features
+
+- **Thinking Budget Rectifier**: Fine-grained thinking budget allocation control (#1005, thanks @yovinchen)
+- **WebDAV Auto Sync**: Automatic sync with large file protection (#923, thanks @clx20000410; #1043, thanks @SaladDay)
+- **Theme Switch Animation**: Circular reveal transition for a smoother visual experience (#905, thanks @funnytime75)
+- **Claude Config Editor Quick Toggles**: Quick toggle switches for common settings (#1012, thanks @JIA-ss)
+- **Dynamic Endpoint Hint**: Context-aware hint text based on API format selection (#860, thanks @zhu-jl18)
+- **Usage Dashboard Enhancement**: Auto-refresh control and robust formatting (#942, thanks @yovinchen)
+- **New Pricing Data**: claude-opus-4-6 and gpt-5.3-codex (#943, thanks @yovinchen)
+- **Silent Startup Optimization**: Silent startup option only shown when launch-on-startup is enabled
+
+### Architecture Improvements
+
+#### Partial Key-Field Merging (⚠️ Breaking Change)
+
+Provider switching now uses partial key-field merging instead of full config overwrite (#1098).
+
+**Before**: Switching providers overwrote the entire `settings_config` to the live config file. This meant that any non-provider settings the user manually added to the live file (plugins, MCP config, permissions, etc.) would be lost on every switch. To work around this, previous versions offered a "Common Config Snippet" feature that let users define shared config to be merged on every switch.
+
+**After**: Switching providers now only replaces provider-related key-values (API keys, endpoints, models, etc.), leaving all other settings intact. The "Common Config Snippet" feature is therefore no longer needed and has been removed.
+
+**Impact & Migration**:
+- If you **didn't use** Common Config Snippets, this change is fully transparent — switching just works better now
+- If you **used** Common Config Snippets to preserve custom settings (MCP config, permissions, etc.), those settings are now automatically preserved during switches — no action needed
+- If you used Common Config Snippets for other purposes (e.g., injecting extra config on every switch), please manually add those settings to your live config file after upgrading
+
+This refactoring removed 6 frontend files (3 components + 3 hooks) and ~150 lines of backend dead code.
+
+#### Manual Import Replaces Auto-Import
+
+Startup no longer auto-imports external configurations. Users now click "Import Current Config" manually, preventing accidental data overwrites.
+
+#### OmoVariant Parameterization
+
+Eliminated ~250 lines of duplicated code in the OMO module via `OmoVariant` struct parameterization.
+
+#### OMO Common Config Removal
+
+Removed the two-layer merge system, reducing ~1,733 lines of code and simplifying the architecture.
+
+#### ProviderForm Decomposition
+
+Reduced ProviderForm component from 2,227 lines to 1,526 lines by extracting 5 independent modules (opencodeFormUtils, useOmoModelSource, useOpencodeFormState, useOmoDraftState, useOpenclawFormState), significantly improving maintainability.
+
+#### Shared MCP/Skills Components
+
+Extracted AppCountBar, AppToggleGroup, and ListItemRow shared components to reduce duplication across MCP and Skills panels (#897, thanks @PeanutSplash).
+
+#### Settings Page Refactoring
+
+Refactored settings page to a 5-tab layout (General | Proxy | Advanced | Usage | About), reducing SettingsPage code from ~716 to ~426 lines.
+
+#### Other Improvements
+
+- Unified terminal selection via global settings with WezTerm support added
+- Updated Claude model references from 4.5 to 4.6
+
+### Bug Fixes
+
+#### Critical Fixes
+
+- **Windows Home Dir Regression**: Restored default home directory resolution to prevent providers/settings "disappearing" when `HOME` env var differs from the real user profile directory in Git/MSYS environments
+- **Linux White Screen**: Disabled WebKitGTK hardware acceleration on AMD GPUs (Cezanne/Radeon Vega) to prevent blank screen on startup (#986, thanks @ThendCN)
+- **OpenAI Beta Parameter**: Stopped appending `?beta=true` to `/v1/chat/completions` endpoints, fixing request failures for Nvidia and other `apiFormat="openai_chat"` providers (#1052, thanks @jnorthrup)
+- **Health Check Auth**: Health check now respects provider's `auth_mode` setting, preventing failures for proxy services that only support Bearer authentication (#824, thanks @Jassy930)
+
+#### Provider Preset Fixes
+
+- Fixed OpenClaw `/v1` prefix causing double path (/v1/v1/messages)
+- Corrected Opus pricing ($15/$75 → $5/$25) and upgraded to 4.6
+- Unified AIGoCode URL to `https://api.aigocode.com` across all apps
+- Removed outdated partner status from Zhipu GLM presets
+- Restored API Key input visibility when creating new Claude providers
+- Hide quick toggles for non-active providers, show context-aware JSON editor hints
+
+#### OMO Fixes
+
+- Added missing omo-slim category checks across add/form/mutation paths
+- Fixed OMO Slim query cache invalidation after provider mutations
+- Synced OMO agent/category recommended models with upstream sources
+- Added toast feedback for "Fill Recommended" button silent failures
+- Removed last-provider deletion restriction for OMO/OMO Slim
+- Reject saving OpenCode providers without configured models (#932, thanks @yovinchen)
+
+#### OpenClaw Fixes
+
+- Fixed 25 missing i18n keys, replaced key={index} with stable IDs, added deep link additive merge, and other code review issues
+- Enhanced EnvPanel robustness (NaN guards, entry key names instead of array indices)
+- Merged duplicate i18n keys to restore provider form translations
+
+#### Platform Fixes
+
+- Windows silent startup window flicker (#901, thanks @funnytime75)
+- Title bar dark mode theme following (#903, thanks @funnytime75)
+- Windows Skills path separator matching (#868, thanks @stmoonar)
+- WSL helper functions conditional compilation
+
+#### UI Fixes
+
+- Toolbar height clipping causing AppSwitcher to be obscured
+- Show update badge instead of green checkmark when newer version available
+- Session Manager button only visible for Claude/Codex apps
+- Unified SQL import/export card dark mode styling (#1067, thanks @SaladDay)
+
+#### Other Fixes
+
+- Replaced hardcoded Chinese strings in Session Manager with i18n keys
+- Fixed Skill documentation URL branch and path resolution (#977, thanks @yovinchen)
+- Added missing OpenCode install.sh installation path detection (#988, thanks @zhu-jl18)
+- Fixed Skill ZIP symlink resolution (#1040, thanks @yovinchen)
+- Added missing OpenCode checkbox in MCP add/edit form (#1026, thanks @yovinchen)
+- Removed auto-import side effect from useProvidersQuery queryFn
+
+### Performance
+
+- Parallel directory scanning + head-tail JSONL reading for session panel, significantly improving session list loading speed
+- Removed unnecessary TanStack Query cache overhead for Tauri local IPC calls
+
+### Documentation
+
+- Sponsor updates: SSSAiCode, Crazyrouter, AICoding, Right Code, MiniMax
+- Added user manual documentation (#979, thanks @yovinchen)
+
+### Notes & Considerations
+
+- **OpenClaw is a newly supported app**: OpenClaw CLI must be installed first to use related features.
+- **⚠️ Common Config Snippet feature has been removed**: Since provider switching now uses partial key-field merging (only replacing API keys, endpoints, models, etc.), user's other settings are automatically preserved, making Common Config Snippets unnecessary. See the "Architecture Improvements" section above for migration details.
+- **Auto-import changed to manual**: External configurations are no longer auto-imported on startup. Click "Import Current Config" manually when needed.
+- **OMO and OMO Slim are mutually exclusive**: Only one can be active at a time. Switching to one automatically disables the other.
+- **Backup is enabled by default**: Automatic hourly backup during runtime. Adjust the policy in the Backup panel.
+
+### Special Thanks
+
+Thanks to all contributors for their contributions to this release!
+
+@TinsFox @keithyt06 @kv-chiu @SaladDay @jnorthrup @JIA-ss @clx20000410 @ThendCN @yovinchen @zhu-jl18 @myjustify @funnytime75 @PeanutSplash @Jassy930 @stmoonar
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `CC-Switch-v3.11.0-Windows.msi`          | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.11.0-Windows-Portable.zip` | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                             | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `CC-Switch-v3.11.0-macOS.zip`    | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.11.0-macOS.tar.gz` | For Homebrew installation and auto-update                            |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" → "Privacy & Security" → click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.10.0] - 2026-01-21
+
+> OpenCode Support, Global Proxy, Claude Rectifier & Multi-App Experience Enhancements
+
+### Overview
+
+CC Switch v3.10.0 introduces OpenCode support, becoming the fourth managed CLI application.
+This release also brings global proxy settings, Claude Rectifier (thinking signature fixer), enhanced health checks, per-provider configuration, and many other important features, along with comprehensive improvements to multi-app workflows and terminal experience.
+
+### Highlights
+
+- OpenCode Support: Full management of providers, MCP servers, and Skills with auto-import on first launch
+- Global Proxy: Configure a unified proxy for all outbound network requests
+- Claude Rectifier: Thinking signature fixer for better compatibility with third-party APIs
+- Enhanced Health Checks: Configurable prompts and CLI-compatible request format
+- Per-Provider Config: Persistent provider-specific configuration support
+- App Visibility Control: Freely show/hide apps with synchronized tray menu updates
+- Terminal Improvements: Provider-specific terminal buttons, fnm path support, cross-platform safe launch
+- WSL Tool Detection: Detect tool versions in WSL environment with security hardening
+
+### Main Features
+
+#### OpenCode Support (New Fourth App)
+
+- Complete OpenCode provider management: add, edit, switch, delete
+- MCP server management: unified architecture with Claude/Codex/Gemini
+- Skills support: OpenCode can also use Skills functionality
+- Auto-import on first launch: automatically imports existing OpenCode configuration when detected
+- Full internationalization: Chinese/English/Japanese support (#695)
+
+#### Global Proxy
+
+- Configure a unified proxy for all outbound network requests (#596, thanks @yovinchen)
+- Supports HTTP/HTTPS proxy protocols
+- Suitable for network environments requiring proxy access to external APIs
+
+#### Claude Rectifier (Thinking Signature Fixer)
+
+- Automatically fixes Claude API thinking signatures (#595, thanks @yovinchen)
+- Resolves incompatible thinking block formats returned by some third-party API gateways
+- Can be enabled/disabled in Advanced Settings
+
+#### Enhanced Health Checks
+
+- Configurable custom prompts for streaming health checks (#623, thanks @yovinchen)
+- Supports CLI-compatible request format for better simulation of real usage scenarios
+- Improves fault detection accuracy
+
+#### Per-Provider Config
+
+- Support for saving configuration separately for each provider (#663, thanks @yovinchen)
+- Persistent configuration: provider-specific settings retained after restart
+- Suitable for scenarios where different providers require different configurations
+
+#### App Visibility Control
+
+- Freely show/hide any app (Gemini hidden by default)
+- Tray menu automatically syncs visibility settings
+- Hidden apps won't appear in the main interface or tray menu
+
+#### Takeover Compact Mode
+
+- Automatically uses compact layout when 3 or more visible apps are displayed
+- Optimizes space utilization in multi-app scenarios
+
+#### Terminal Improvements
+
+- Provider-specific terminal button: one-click to use current provider in terminal (#564, thanks @kkkman22)
+- `fnm` path support: automatically recognizes Node.js paths managed by fnm
+- Cross-platform safe launch: improved terminal launch logic for Windows/macOS/Linux
+
+#### WSL Tool Detection
+
+- Detect tool versions in WSL environment (#627, thanks @yovinchen)
+- Added security hardening to prevent command injection risks
+
+#### Skills Preset Enhancements
+
+- Added `baoyu-skills` preset repository
+- Automatically supplements missing default repositories for out-of-the-box experience
+
+### Experience Improvements
+
+- Keyboard shortcuts: Press `ESC` to quickly return/close panels (#670, thanks @xxk8)
+- Simplified proxy logs: cleaner and more readable output (#585, thanks @yovinchen)
+- Pricing editor UX: unified `FullScreenPanel` style
+- Advanced settings layout: Rectifier section moved below Failover for better logical flow
+- OpenRouter compatibility mode: disabled by default, UI toggle hidden (reduces clutter)
+
+### Bug Fixes
+
+#### Proxy & Failover
+
+- Immediately switch to P1 when auto-failover is enabled (instead of waiting for next request)
+
+#### Provider Management
+
+- Fixed stale data when reopening provider edit dialog after save (#654, thanks @YangYongAn)
+- Fixed baseUrl and apiKey state not resetting when switching presets
+- Fixed endpoint auto-selection state not persisting (#611, thanks @yovinchen)
+- Automatically apply default color when icon color is not set
+
+#### Deep Links
+
+- Support multi-endpoint import (#597, thanks @yovinchen)
+- Prefer `GOOGLE_GEMINI_BASE_URL` over `GEMINI_BASE_URL`
+
+#### MCP
+
+- Skip `cmd /c` wrapper for WSL target paths (#592, thanks @cxyfer)
+
+#### Usage Templates
+
+- Added variable hints, fixed validation issues (#628, thanks @YangYongAn)
+- Prevent configuration leakage between providers
+- Usage block offset automatically adapts to action button width (#613, thanks @yovinchen)
+
+#### Gemini
+
+- Convert timeout parameters to Gemini CLI format (#580, thanks @cxyfer)
+
+#### UI
+
+- Fixed Select dropdown rendering issues in `FullScreenPanel`
+
+### Notes & Considerations
+
+- **OpenCode is a newly supported app**: OpenCode CLI must be installed first to use related features.
+- **Global proxy affects all outbound requests**: including usage queries, health checks, and other network operations.
+- **Rectifier is experimental**: can be disabled in Advanced Settings if issues occur.
+
+### Special Thanks
+
+Thanks to @yovinchen @YangYongAn @cxyfer @xxk8 @kkkman22 @Shuimo03 for their contributions to this release!
+Thanks to @libukai for designing the elegant failover-related UI!
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                | Architecture                        |
+| ------- | ------------------------------ | ----------------------------------- |
+| Windows | Windows 10 or later            | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                | x64                                 |
+
+#### Windows
+
+| File                                     | Description                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `CC-Switch-v3.10.0-Windows.msi`          | **Recommended** - MSI installer with auto-update     |
+| `CC-Switch-v3.10.0-Windows-Portable.zip` | Portable version, extract and run, no registry write |
+
+#### macOS
+
+| File                             | Description                                                        |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `CC-Switch-v3.10.0-macOS.zip`    | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.10.0-macOS.tar.gz` | For Homebrew installation and auto-update                          |
+
+> **Note**: Since the author doesn't have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Please close it, then go to "System Settings" → "Privacy & Security" → click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation Method                                                    |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Add execute permission and run directly, or use AUR                    |
+| Other distributions / Unsure            | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+---
+
+## [3.9.0] - 2026-01-07
+
+> Local API Proxy, Auto Failover, Universal Provider, and a more complete multi-app workflow
+
+### Overview
+
+CC Switch v3.9.0 is the stable release of the v3.9 beta series (`3.9.0-1`, `3.9.0-2`, `3.9.0-3`).
+It introduces a local API proxy with per-app takeover, automatic failover, universal providers, and many stability and UX improvements across Claude Code, Codex, and Gemini CLI.
+
+### Highlights
+
+- Local API Proxy for Claude Code / Codex / Gemini CLI
+- Auto Failover with circuit breaker and per-app failover queues
+- Universal Provider: one shared config synced across apps (ideal for API gateways like NewAPI)
+- Skills improvements: multi-app support, unified management with SSOT + React Query
+- Common config snippets: extract reusable snippets from the editor or the current provider
+- MCP import: import MCP servers from installed apps
+- Usage improvements: auto-refresh, cache hit/creation metrics, and timezone fixes
+- Linux packaging: RPM and Flatpak artifacts
+
+### Major Features
+
+#### Local API Proxy
+
+- Runs a local high-performance HTTP proxy server (Axum-based)
+- Supports Claude Code, Codex, and Gemini CLI with a unified proxy
+- Per-app takeover: you can independently decide which app routes through the proxy
+- Live config takeover: backs up and redirects the CLI live config to the local proxy when takeover is enabled
+- Monitoring: request logging and usage statistics for easier debugging and cost tracking
+- Error request logging: keep detailed logs for failed proxy requests to simplify debugging (#401, thanks @yovinchen)
+
+#### Auto Failover (Circuit Breaker)
+
+- Automatically detects provider failures and triggers protection (circuit breaker)
+- Automatically switches to a backup provider when the current one is unhealthy
+- Tracks provider health in real time, and keeps independent failover queues per app
+- When failover is disabled, timeout/retry related settings no longer affect normal request flow
+
+#### Skills Management
+
+- Multi-app Skills support for Claude Code and Codex, with smoother migration from older skill layouts (#365, #378, thanks @yovinchen)
+- Unified Skills management architecture (SSOT + React Query) for more consistent state and refresh behavior
+- Better discovery UX and performance:
+  - Skip hidden directories during discovery
+  - Faster discovery with long-lived caching for discoverable skills
+  - Clear loading indicators and more discoverable header actions (import/refresh)
+  - Fix wrong skill repo branch (#505, thanks @kjasn)
+
+#### Universal Provider
+
+- Add a shared provider configuration that can sync to Claude/Codex/Gemini (#348, thanks @Calcium-Ion)
+- Designed for API gateways that support multiple protocols (e.g., NewAPI)
+- Allows per-app default model mapping under a single provider
+
+#### Common Config Snippets (Claude/Codex/Gemini)
+
+- Maintain a reusable "common config" snippet and merge/append it into providers that enable it
+- New extraction workflow:
+  - Extract from the editor content (what you are currently editing)
+  - Or extract from the current active provider when the editor content is not provided
+- Codex extraction is safer:
+  - Removes provider-specific sections like `model_provider`, `model`, and the entire `model_providers` table
+  - Preserves `base_url` under `[mcp_servers.*]` so MCP configs are not accidentally broken
+
+#### MCP Management
+
+- Import MCP servers from installed apps
+- Improve robustness: skip sync when the target CLI app is not installed; handle invalid Codex `config.toml` gracefully (#461, thanks @majiayu000)
+- Windows compatibility: wrap npx/npm commands with `cmd /c` for MCP export
+
+#### Usage & Pricing
+
+- Usage & pricing improvements: auto-refresh, cache hit/creation metrics, timezone handling fixes, and refreshed built-in pricing table (#508, thanks @yovinchen)
+- DeepLink support: import usage query configuration via deeplink (#400, thanks @qyinter)
+- Model extraction for usage statistics (#455, thanks @yovinchen)
+- Usage query credentials can fall back to provider config (#360, thanks @Sirhexs)
+
+### UX Improvements
+
+- Provider search filter: quickly find providers by name (#435, thanks @TinsFox)
+- Provider icon colors: customize provider icon colors for quicker visual identification (#385, thanks @yovinchen)
+- Keyboard shortcut: `Cmd/Ctrl + ,` opens Settings (#436, thanks @TinsFox)
+- Skip Claude Code first-run confirmation dialog (optional)
+- Closable toasts: close buttons for switch toast and all success toasts (#350, thanks @ForteScarlet)
+- Update badge navigation: clicking the update badge opens the About tab
+- Settings page tab style improvements (#342, thanks @wenyuanw)
+- Smoother transitions: fade transitions for app/view switching and exit animations for panels
+- Proxy takeover active theme: apply an emerald theme while takeover is active
+- Dark mode readability improvements for forms and labels
+- Better window dragging area for full-screen panels (#525, thanks @zerob13)
+
+### Platform Notes
+
+#### Windows
+
+- Prevent terminal windows from appearing during version checks
+- Improve window sizing defaults (minimum width/height)
+- Fix black screen on startup by using the system titlebar
+- Add a fallback for `crypto.randomUUID()` on older WebViews
+
+#### macOS
+
+- Use `.app` bundle path for autostart to avoid terminal window popups (#462, thanks @majiayu000)
+- Improve tray/icon behavior and header alignment
+
+### Packaging
+
+- Linux: RPM and Flatpak packaging targets are now available for building release artifacts
+
+### Notes
+
+- Security improvements for the JavaScript executor and usage script execution (#151, thanks @luojiyin1987).
+- SQL import is restricted to CC Switch exported backups to reduce the risk of importing unsafe or incompatible SQL dumps.
+- Proxy takeover modifies CLI live configs; CC Switch will back up the live config before redirecting it to the local proxy. If you want to revert, disable takeover/stop the proxy and restore from the backup when needed.
+
+### Special Thanks
+
+Special thanks to @xunyu @deijing @su-fen for their support and contributions. This release wouldn't be possible without you!
+
+### Download & Installation
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the appropriate version.
+
+#### System Requirements
+
+| System  | Minimum Version                 | Architecture                        |
+| ------- | ------------------------------- | ----------------------------------- |
+| Windows | Windows 10 or later             | x64                                 |
+| macOS   | macOS 10.15 (Catalina) or later | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | See table below                 | x64                                 |
+
+#### Windows
+
+| File                                    | Description                                        |
+| --------------------------------------- | -------------------------------------------------- |
+| `CC-Switch-v3.9.0-Windows.msi`          | **Recommended** - MSI installer with auto-update support |
+| `CC-Switch-v3.9.0-Windows-Portable.zip` | Portable version, no installation required         |
+
+#### macOS
+
+| File                            | Description                                                       |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `CC-Switch-v3.9.0-macOS.zip`    | **Recommended** - Extract and drag to Applications, Universal Binary |
+| `CC-Switch-v3.9.0-macOS.tar.gz` | For Homebrew installation and auto-update                         |
+
+> **Note**: Since the author does not have an Apple Developer account, you may see an "unidentified developer" warning on first launch. Close the app, then go to "System Settings" → "Privacy & Security" → click "Open Anyway", and it will open normally afterwards.
+
+#### Homebrew (MacOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+| Distribution                            | Recommended Format | Installation                                                           |
+| --------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`             | `sudo dpkg -i CC-Switch-*.deb` or `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`             | `sudo rpm -i CC-Switch-*.rpm` or `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`             | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage`        | Make executable and run directly, or use AUR                           |
+| Other distros / Unsure                  | `.AppImage`        | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+| Sandboxed installation                  | `.flatpak`         | `flatpak install CC-Switch-*.flatpak`                                  |
+
+---
+
+## [3.8.0] - 2025-11-28
+
+> Persistence Architecture Upgrade, Laying the Foundation for Cloud Sync
+
+### Overview
+
+CC Switch v3.8.0 is a major architectural upgrade that restructures the data persistence layer and user interface, laying the foundation for future cloud sync and local proxy features.
+
+**Commits**: 51 commits since v3.7.1
+**Code Changes**: 207 files, +17,297 / -6,870 lines
+
+### Major Updates
+
+#### Persistence Architecture Upgrade
+
+Migrated from single JSON file storage to SQLite + JSON dual-layer architecture for hierarchical data management.
+
+**Architecture Changes**:
+
+```
+v3.7.x (Old)                     v3.8.0 (New)
+┌─────────────────┐              ┌─────────────────────────────────┐
+│  config.json    │              │  SQLite (Syncable Data)         │
+│  ┌───────────┐  │              │  ├─ providers     Provider cfg  │
+│  │ providers │  │              │  ├─ mcp_servers   MCP servers   │
+│  │ mcp       │  │     ──>      │  ├─ prompts       Prompts       │
+│  │ prompts   │  │              │  ├─ skills        Skills        │
+│  │ settings  │  │              │  └─ settings      General cfg   │
+│  └───────────┘  │              ├─────────────────────────────────┤
+└─────────────────┘              │  JSON (Device-level Data)       │
+                                 │  └─ settings.json Local settings│
+                                 │     ├─ Window position          │
+                                 │     ├─ Path overrides           │
+                                 │     └─ Current provider ID      │
+                                 └─────────────────────────────────┘
+```
+
+**Dual-layer Structure Design**:
+
+| Layer      | Storage | Data Types                      | Sync Strategy   |
+| ---------- | ------- | ------------------------------- | --------------- |
+| Cloud Sync | SQLite  | Providers, MCP, Prompts, Skills | Future syncable |
+| Device     | JSON    | Window state, local paths       | Stays local     |
+
+**Technical Implementation**:
+
+- **Schema Version Management** - Supports database structure upgrade migrations
+- **SQL Import/Export** - `backup.rs` supports SQL dump for cloud storage
+- **Transaction Support** - SQLite native transactions ensure data consistency
+- **Auto Migration** - Automatically migrates from `config.json` on first launch
+
+**Modular Refactoring**:
+
+```
+database/
+├── mod.rs              Core Database struct and initialization
+├── schema.rs           Table definitions, schema version migrations
+├── backup.rs           SQL import/export, binary snapshot backup
+├── migration.rs        JSON → SQLite data migration engine
+└── dao/                Data Access Object layer
+    ├── providers.rs    Provider CRUD
+    ├── mcp.rs          MCP server CRUD
+    ├── prompts.rs      Prompts CRUD
+    ├── skills.rs       Skills CRUD
+    └── settings.rs     Key-value settings storage
+```
+
+#### Brand New User Interface
+
+Completely redesigned UI providing a more modern visual experience.
+
+**Visual Improvements**:
+
+- Redesigned interface layout
+- Unified component styles
+- Smoother transition animations
+- Optimized visual hierarchy
+
+**Interaction Enhancements**:
+
+- Redesigned header toolbar
+- Unified ConfirmDialog styling
+- Disabled overscroll bounce effect on main view
+- Improved form validation feedback
+
+**Compatibility Adjustments**:
+
+- Downgraded Tailwind CSS from v4 to v3.4 for better browser compatibility
+
+#### Japanese Language Support
+
+Added Japanese interface support, expanding internationalization to three languages.
+
+**Supported Languages**:
+
+- Simplified Chinese
+- English
+- Japanese (New)
+
+### New Features
+
+#### Skills Recursive Scanning
+
+Skills management system now supports recursive scanning of repository directories, automatically discovering nested skill files.
+
+**Improvements**:
+
+- Support for multi-level directory structures
+- Automatic discovery of all `SKILL.md` files
+- Allow same-named skills from different repositories (using full path for deduplication)
+
+#### Provider Icon Configuration
+
+Provider presets now support custom icon configuration.
+
+**Features**:
+
+- Preset providers include default icons
+- Icon settings preserved when duplicating providers
+- Custom icon colors
+
+#### Enhanced Form Validation
+
+Provider forms now include required field validation with friendlier error messages.
+
+**Improvements**:
+
+- Real-time validation for required fields
+- Unified Toast notifications for validation errors
+- Clearer error messages
+
+#### Auto Launch on Startup
+
+Added auto-launch functionality supporting Windows, macOS, and Linux platforms.
+
+**Features**:
+
+- One-click enable/disable in settings
+- Implemented using platform-native APIs
+- Windows uses Registry, macOS uses LaunchAgent, Linux uses XDG autostart
+
+#### New Provider Presets
+
+- **MiniMax** - Official partner
+
+### Bug Fixes
+
+#### Critical Fixes
+
+**Custom Endpoints Lost Issue**
+
+Fixed an issue where custom request URLs were unexpectedly lost when updating providers.
+
+- Root Cause: `INSERT OR REPLACE` executes `DELETE + INSERT` under the hood in SQLite, triggering foreign key cascade deletion
+- Fix: Changed to use `UPDATE` statement for existing providers
+
+**Gemini Configuration Issues**
+
+- Fixed custom provider environment variables not correctly written to `.env` file
+- Fixed security auth config incorrectly written to other config files
+
+**Provider Validation Issues**
+
+- Fixed validation error when current provider ID doesn't exist
+- Fixed icon fields lost when duplicating providers
+
+#### Platform Compatibility
+
+**Linux**
+
+- Resolved WebKitGTK DMA-BUF rendering issue
+- Preserve user `.desktop` file customizations
+
+#### Other Fixes
+
+- Fixed redundant usage queries when switching apps
+- Fixed DMXAPI preset using wrong auth token field
+- Fixed missing translation keys in deeplink components
+- Fixed usage script template initialization logic
+
+### Technical Improvements
+
+#### Architecture Refactoring
+
+**Provider Service Modularization**:
+
+```
+services/provider/
+├── mod.rs          Core service - add/update/delete/switch/validate
+├── live.rs         Live config file operations
+├── gemini_auth.rs  Gemini auth type detection
+├── endpoints.rs    Custom endpoint management
+└── usage.rs        Usage script execution
+```
+
+**Deeplink Modularization**:
+
+```
+deeplink/
+├── mod.rs       Module exports
+├── parser.rs    URL parsing
+├── provider.rs  Provider import logic
+├── mcp.rs       MCP import logic
+├── prompt.rs    Prompt import
+├── skill.rs     Skills import
+└── utils.rs     Utility functions
+```
+
+#### Code Quality
+
+**Cleanup**:
+
+- Removed legacy JSON-era import/export dead code
+- Removed unused MCP type exports
+- Unified error handling approach
+
+**Test Updates**:
+
+- Migrated tests to SQLite database architecture
+- Updated component tests to match current implementation
+- Fixed MSW handlers to adapt to new API
+
+### Technical Statistics
+
+```
+Overall Changes:
+- Commits: 51
+- Files: 207 files changed
+- Additions: +17,297 lines
+- Deletions: -6,870 lines
+- Net: +10,427 lines
+
+Commit Type Distribution:
+- fix: 25 (Bug fixes)
+- refactor: 11 (Code refactoring)
+- feat: 9 (New features)
+- test: 1 (Testing)
+- other: 5
+
+Change Area Distribution:
+- Frontend source: 112 files
+- Rust backend: 63 files
+- Test files: 20 files
+- i18n files: 3 files
+```
+
+### Migration Guide
+
+#### Upgrading from v3.7.x
+
+**Auto Migration** - Executes automatically on first launch:
+
+1. Detects if `config.json` exists
+2. Migrates all data to SQLite within a transaction
+3. Migrates device-level settings to `settings.json`
+4. Shows migration success notification
+
+**Data Safety**:
+
+- Original `config.json` file is preserved (not deleted)
+- Error dialog displayed on migration failure, `config.json` preserved
+- Supports Dry-run mode to verify migration logic
+
+### Download & Installation
+
+#### System Requirements
+
+- **Windows**: Windows 10+
+- **macOS**: macOS 10.15 (Catalina)+
+- **Linux**: Ubuntu 22.04+ / Debian 11+ / Fedora 34+
+
+#### Download Links
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download:
+
+- **Windows**: `CC-Switch-v3.8.0-Windows.msi` or `-Portable.zip`
+- **macOS**: `CC-Switch-v3.8.0-macOS.tar.gz` or `.zip`
+- **Linux**: `CC-Switch-v3.8.0-Linux.AppImage` or `.deb`
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+### Acknowledgments
+
+#### Contributors
+
+Thanks to all contributors who made this release possible:
+
+- [@YoVinchen](https://github.com/YoVinchen) - UI and database refactoring
+- [@farion1231](https://github.com/farion1231) - Bug fixes and feature enhancements
+- Community members for testing and feedback
+
+#### Sponsors
+
+**Zhipu AI** - GLM CODING PLAN Sponsor
+[Get 10% off with this link](https://z.ai/subscribe?ic=8JVLJQFSKB)
+
+**PackyCode** - API Relay Service Partner
+[Use code "cc-switch" for 10% off registration](https://www.packyapi.com/register?aff=cc-switch)
+
+**ShandianShuo** - Local-first AI Voice Input
+[Free download](https://shandianshuo.cn) for Mac/Windows
+
+**MiniMax** - MiniMax M2 CODING PLAN Sponsor
+[Black Friday sale, plans starting at $2](https://platform.minimax.io/subscribe/coding-plan)
+
+### Feedback & Support
+
+- **Issue Reports**: [GitHub Issues](https://github.com/farion1231/cc-switch/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/farion1231/cc-switch/discussions)
+- **Documentation**: [README](../README.md)
+- **Changelog**: [CHANGELOG.md](../CHANGELOG.md)
+
+### Future Roadmap
+
+**v3.9.0 Preview** (Tentative):
+
+- Local proxy feature
+
+Stay tuned for more updates!
+
+**Happy Coding!**
+
+---
+
+## [3.7.1] - 2025-11-22
+
+> Stability Enhancements and User Experience Improvements
+
+### v3.7.1 Updates
+
+**Code Changes**: 17 files, +524 / -81 lines
+
+#### Bug Fixes
+
+- **Fix Third-Party Skills Installation Failure** (#268)
+  Fixed installation issues for skills repositories with custom subdirectories, now supports repos like `ComposioHQ/awesome-claude-skills` with subdirectories
+
+- **Fix Gemini Configuration Persistence Issue**
+  Resolved the issue where settings.json edits in Gemini form were lost when switching providers
+
+- **Prevent Dialogs from Closing on Overlay Click**
+  Added protection against clicking overlay/backdrop, preventing accidental form data loss across all 11 dialog components
+
+#### New Features
+
+- **Gemini Configuration Directory Support** (#255)
+  Added Gemini configuration directory option in settings, supports customizing `~/.gemini/` path
+
+- **ArchLinux Installation Support** (#259)
+  Added AUR installation method: `paru -S cc-switch-bin`
+
+#### Improvements
+
+- **Skills Error Message i18n Enhancement**
+  Added 28+ detailed error messages (English & Chinese) with specific resolution suggestions, extended download timeout from 15s to 60s
+
+- **Code Formatting**
+  Applied unified Rust and TypeScript code formatting standards
+
+#### Download
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download the latest version
+
+### v3.7.0 Complete Release Notes
+
+> From Provider Switcher to All-in-One AI CLI Management Platform
+
+**Commits**: 85 from v3.6.0
+**Code Changes**: 152 files, +18,104 / -3,732 lines
+
+### New Features
+
+#### Gemini CLI Integration
+
+Complete support for Google Gemini CLI, becoming the third supported application (Claude Code, Codex, Gemini).
+
+**Core Capabilities**:
+
+- **Dual-file configuration** - Support for both `.env` and `settings.json` formats
+- **Auto-detection** - Automatically detect `GOOGLE_GEMINI_BASE_URL`, `GEMINI_MODEL`, etc.
+- **Full MCP support** - Complete MCP server management for Gemini
+- **Deep link integration** - Import via `ccswitch://` protocol
+- **System tray** - Quick-switch from tray menu
+
+**Provider Presets**:
+
+- **Google Official** - OAuth authentication support
+- **PackyCode** - Partner integration
+- **Custom** - Full customization support
+
+**Technical Implementation**:
+
+- New backend modules: `gemini_config.rs` (20KB), `gemini_mcp.rs`
+- Form synchronization with environment editor
+- Dual-file atomic writes
+
+#### MCP v3.7.0 Unified Architecture
+
+Complete refactoring of MCP management system for cross-application unification.
+
+**Architecture Improvements**:
+
+- **Unified panel** - Single interface for Claude/Codex/Gemini MCP servers
+- **SSE transport** - New Server-Sent Events support
+- **Smart parser** - Fault-tolerant JSON parsing
+- **Format correction** - Auto-fix Codex `[mcp_servers]` format
+- **Extended fields** - Preserve custom TOML fields
+
+**User Experience**:
+
+- Default app selection in forms
+- JSON formatter for validation
+- Improved visual hierarchy
+- Better error messages
+
+**Import/Export**:
+
+- Unified import from all three apps
+- Bidirectional synchronization
+- State preservation
+
+#### Claude Skills Management System
+
+**Approximately 2,000 lines of code** - A complete skill ecosystem platform.
+
+**GitHub Integration**:
+
+- Auto-scan skills from GitHub repositories
+- Pre-configured repos:
+  - `ComposioHQ/awesome-claude-skills` - Curated collection
+  - `anthropics/skills` - Official Anthropic skills
+  - `cexll/myclaude` - Community contributions
+- Add custom repositories
+- Subdirectory scanning support (`skillsPath`)
+
+**Lifecycle Management**:
+
+- **Discover** - Auto-detect `SKILL.md` files
+- **Install** - One-click to `~/.claude/skills/`
+- **Uninstall** - Safe removal with tracking
+- **Update** - Check for updates (infrastructure ready)
+
+**Technical Architecture**:
+
+- **Backend**: `SkillService` (526 lines) with GitHub API integration
+- **Frontend**: SkillsPage, SkillCard, RepoManager
+- **UI Components**: Badge, Card, Table (shadcn/ui)
+- **State**: Persistent storage in `config.json`
+- **i18n**: 47+ translation keys
+
+#### Prompts Management System
+
+**Approximately 1,300 lines of code** - Complete system prompt management.
+
+**Multi-Preset Management**:
+
+- Create unlimited prompt presets
+- Quick switch between presets
+- One active prompt at a time
+- Delete protection for active prompts
+
+**Cross-App Support**:
+
+- **Claude**: `~/.claude/CLAUDE.md`
+- **Codex**: `~/.codex/AGENTS.md`
+- **Gemini**: `~/.gemini/GEMINI.md`
+
+**Markdown Editor**:
+
+- Full-featured CodeMirror 6 integration
+- Syntax highlighting
+- Dark theme (One Dark)
+- Real-time preview
+
+**Smart Synchronization**:
+
+- **Auto-write** - Immediately write to live files
+- **Backfill protection** - Save current content before switching
+- **Auto-import** - Import from live files on first launch
+- **Modification protection** - Preserve manual modifications
+
+**Technical Implementation**:
+
+- **Backend**: `PromptService` (213 lines)
+- **Frontend**: PromptPanel (177), PromptFormModal (160), MarkdownEditor (159)
+- **Hooks**: usePromptActions (152 lines)
+- **i18n**: 41+ translation keys
+
+#### Deep Link Protocol (ccswitch://)
+
+One-click provider configuration import via URL scheme.
+
+**Features**:
+
+- Protocol registration on all platforms
+- Import from shared links
+- Lifecycle integration
+- Security validation
+
+#### Environment Variable Conflict Detection
+
+Intelligent detection and management of configuration conflicts.
+
+**Detection Scope**:
+
+- **Claude & Codex** - Cross-app conflicts
+- **Gemini** - Auto-discovery
+- **MCP** - Server configuration conflicts
+
+**Management Features**:
+
+- Visual conflict indicators
+- Resolution suggestions
+- Override warnings
+- Backup before changes
+
+### Improvements
+
+#### Provider Management
+
+**New Presets**:
+
+- **DouBaoSeed** - ByteDance's DouBao
+- **Kimi For Coding** - Moonshot AI
+- **BaiLing** - BaiLing AI
+- **Removed AnyRouter** - To avoid confusion
+
+**Enhancements**:
+
+- Model name configuration for Codex and Gemini
+- Provider notes field for organization
+- Enhanced preset metadata
+
+#### Configuration Management
+
+- **Common config migration** - From localStorage to `config.json`
+- **Unified persistence** - Shared across all apps
+- **Auto-import** - First launch configuration import
+- **Backfill priority** - Correct handling of live files
+
+#### UI/UX Improvements
+
+**Design System**:
+
+- **macOS native** - System-aligned color scheme
+- **Window centering** - Default centered position
+- **Visual polish** - Improved spacing and hierarchy
+
+**Interactions**:
+
+- **Password input** - Fixed Edge/IE reveal buttons
+- **URL overflow** - Fixed card overflow
+- **Error copying** - Copy-to-clipboard errors
+- **Tray sync** - Real-time drag-and-drop sync
+
+### Bug Fixes
+
+#### Critical Fixes
+
+- **Usage script validation** - Boundary checks
+- **Gemini validation** - Relaxed constraints
+- **TOML parsing** - CJK quote handling
+- **MCP fields** - Custom field preservation
+- **White screen** - FormLabel crash fix
+
+#### Stability
+
+- **Tray safety** - Pattern matching instead of unwrap
+- **Error isolation** - Tray failures don't block operations
+- **Import classification** - Correct category assignment
+
+#### UI Fixes
+
+- **Model placeholders** - Removed misleading hints
+- **Base URL** - Auto-fill for third-party providers
+- **Drag sort** - Tray menu synchronization
+
+### Technical Improvements
+
+#### Architecture
+
+**MCP v3.7.0**:
+
+- Removed legacy code (~1,000 lines)
+- Unified initialization structure
+- Backward compatibility maintained
+- Comprehensive code formatting
+
+**Platform Compatibility**:
+
+- Windows winreg API fix (v0.52)
+- Safe pattern matching (no `unwrap()`)
+- Cross-platform tray handling
+
+#### Configuration
+
+**Synchronization**:
+
+- MCP sync across all apps
+- Gemini form-editor sync
+- Dual-file reading (.env + settings.json)
+
+**Validation**:
+
+- Input boundary checks
+- TOML quote normalization (CJK)
+- Custom field preservation
+- Enhanced error messages
+
+#### Code Quality
+
+**Type Safety**:
+
+- Complete TypeScript coverage
+- Rust type refinements
+- API contract validation
+
+**Testing**:
+
+- Simplified assertions
+- Better test coverage
+- Integration test updates
+
+**Dependencies**:
+
+- Tauri 2.8.x
+- Rust: `anyhow`, `zip`, `serde_yaml`, `tempfile`
+- Frontend: CodeMirror 6 packages
+- winreg 0.52 (Windows)
+
+### Technical Statistics
+
+```
+Total Changes:
+- Commits: 85
+- Files: 152 changed
+- Additions: +18,104 lines
+- Deletions: -3,732 lines
+
+New Modules:
+- Skills Management: 2,034 lines (21 files)
+- Prompts Management: 1,302 lines (20 files)
+- Gemini Integration: ~1,000 lines
+- MCP Refactor: ~3,000 lines refactored
+
+Code Distribution:
+- Backend (Rust): ~4,500 lines new
+- Frontend (React): ~3,000 lines new
+- Configuration: ~1,500 lines refactored
+- Tests: ~500 lines
+```
+
+### Strategic Positioning
+
+#### From Tool to Platform
+
+v3.7.0 represents a shift in CC Switch's positioning:
+
+| Aspect            | v3.6                     | v3.7.0                       |
+| ----------------- | ------------------------ | ---------------------------- |
+| **Identity**      | Provider Switcher        | AI CLI Management Platform   |
+| **Scope**         | Configuration Management | Ecosystem Management         |
+| **Applications**  | Claude + Codex           | Claude + Codex + Gemini      |
+| **Capabilities**  | Switch configs           | Extend capabilities (Skills) |
+| **Customization** | Manual editing           | Visual management (Prompts)  |
+| **Integration**   | Isolated apps            | Unified management (MCP)     |
+
+#### Six Pillars of AI CLI Management
+
+1. **Configuration Management** - Provider switching and management
+2. **Capability Extension** - Skills installation and lifecycle
+3. **Behavior Customization** - System prompt presets
+4. **Ecosystem Integration** - Deep links and sharing
+5. **Multi-AI Support** - Claude/Codex/Gemini
+6. **Intelligent Detection** - Conflict prevention
+
+### Download & Installation
+
+#### System Requirements
+
+- **Windows**: Windows 10+
+- **macOS**: macOS 10.15 (Catalina)+
+- **Linux**: Ubuntu 22.04+ / Debian 11+ / Fedora 34+ / ArchLinux
+
+#### Download Links
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download:
+
+- **Windows**: `CC-Switch-Windows.msi` or `-Portable.zip`
+- **macOS**: `CC-Switch-macOS.tar.gz` or `.zip`
+- **Linux**: `CC-Switch-Linux.AppImage` or `.deb`
+- **ArchLinux**: `paru -S cc-switch-bin`
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+### Migration Notes
+
+#### From v3.6.x
+
+**Automatic migration** - No action required, configs are fully compatible
+
+#### From v3.1.x or Earlier
+
+**Two-step migration required**:
+
+1. First upgrade to v3.2.x (performs one-time migration)
+2. Then upgrade to v3.7.0
+
+#### New Features
+
+- **Skills**: No migration needed, start fresh
+- **Prompts**: Auto-import from live files on first launch
+- **Gemini**: Install Gemini CLI separately if needed
+- **MCP v3.7.0**: Backward compatible with previous configs
+
+### Acknowledgments
+
+#### Contributors
+
+Thanks to all contributors who made this release possible:
+
+- [@YoVinchen](https://github.com/YoVinchen) - Skills & Prompts & Gemini integration implementation
+- [@farion1231](https://github.com/farion1231) - From developer to issue responder
+- Community members for testing and feedback
+
+#### Sponsors
+
+**Z.ai** - GLM CODING PLAN sponsor
+[Get 10% OFF with this link](https://z.ai/subscribe?ic=8JVLJQFSKB)
+
+**PackyCode** - API relay service partner
+[Register with "cc-switch" code for 10% discount](https://www.packyapi.com/register?aff=cc-switch)
+
+**ShanDianShuo** - Local-first AI voice input
+[Free download](https://shandianshuo.cn) for Mac/Win
+
+### Feedback & Support
+
+- **Issues**: [GitHub Issues](https://github.com/farion1231/cc-switch/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/farion1231/cc-switch/discussions)
+- **Documentation**: [README](../README.md)
+- **Changelog**: [CHANGELOG.md](../CHANGELOG.md)
+
+### What's Next
+
+**v3.8.0 Preview** (Tentative):
+
+- Local proxy functionality
+
+Stay tuned for more updates!
+
+**Happy Coding!**
+
+---
+
+## [3.7.0] - 2025-11-19
+
+> From Provider Switcher to All-in-One AI CLI Management Platform
+
+### Overview
+
+CC Switch v3.7.0 introduces six major features with over 18,000 lines of new code.
+
+**Commits**: 85 from v3.6.0
+**Code Changes**: 152 files, +18,104 / -3,732 lines
+
+### New Features
+
+#### Gemini CLI Integration
+
+Complete support for Google Gemini CLI, becoming the third supported application (Claude Code, Codex, Gemini).
+
+**Core Capabilities**:
+
+- **Dual-file configuration** - Support for both `.env` and `settings.json` formats
+- **Auto-detection** - Automatically detect `GOOGLE_GEMINI_BASE_URL`, `GEMINI_MODEL`, etc.
+- **Full MCP support** - Complete MCP server management for Gemini
+- **Deep link integration** - Import via `ccswitch://` protocol
+- **System tray** - Quick-switch from tray menu
+
+**Provider Presets**:
+
+- **Google Official** - OAuth authentication support
+- **PackyCode** - Partner integration
+- **Custom** - Full customization support
+
+**Technical Implementation**:
+
+- New backend modules: `gemini_config.rs` (20KB), `gemini_mcp.rs`
+- Form synchronization with environment editor
+- Dual-file atomic writes
+
+#### MCP v3.7.0 Unified Architecture
+
+Complete refactoring of MCP management system for cross-application unification.
+
+**Architecture Improvements**:
+
+- **Unified panel** - Single interface for Claude/Codex/Gemini MCP servers
+- **SSE transport** - New Server-Sent Events support
+- **Smart parser** - Fault-tolerant JSON parsing
+- **Format correction** - Auto-fix Codex `[mcp_servers]` format
+- **Extended fields** - Preserve custom TOML fields
+
+**User Experience**:
+
+- Default app selection in forms
+- JSON formatter for validation
+- Improved visual hierarchy
+- Better error messages
+
+**Import/Export**:
+
+- Unified import from all three apps
+- Bidirectional synchronization
+- State preservation
+
+#### Claude Skills Management System
+
+**Approximately 2,000 lines of code** - A complete skill ecosystem platform.
+
+**GitHub Integration**:
+
+- Auto-scan skills from GitHub repositories
+- Pre-configured repos:
+  - `ComposioHQ/awesome-claude-skills` - Curated collection
+  - `anthropics/skills` - Official Anthropic skills
+  - `cexll/myclaude` - Community contributions
+- Add custom repositories
+- Subdirectory scanning support (`skillsPath`)
+
+**Lifecycle Management**:
+
+- **Discover** - Auto-detect `SKILL.md` files
+- **Install** - One-click to `~/.claude/skills/`
+- **Uninstall** - Safe removal with tracking
+- **Update** - Check for updates (infrastructure ready)
+
+**Technical Architecture**:
+
+- **Backend**: `SkillService` (526 lines) with GitHub API integration
+- **Frontend**: SkillsPage, SkillCard, RepoManager
+- **UI Components**: Badge, Card, Table (shadcn/ui)
+- **State**: Persistent storage in `skills.json`
+- **i18n**: 47+ translation keys
+
+#### Prompts Management System
+
+**Approximately 1,300 lines of code** - Complete system prompt management.
+
+**Multi-Preset Management**:
+
+- Create unlimited prompt presets
+- Quick switch between presets
+- One active prompt at a time
+- Delete protection for active prompts
+
+**Cross-App Support**:
+
+- **Claude**: `~/.claude/CLAUDE.md`
+- **Codex**: `~/.codex/AGENTS.md`
+- **Gemini**: `~/.gemini/GEMINI.md`
+
+**Markdown Editor**:
+
+- Full-featured CodeMirror 6 integration
+- Syntax highlighting
+- Dark theme (One Dark)
+- Real-time preview
+
+**Smart Synchronization**:
+
+- **Auto-write** - Immediately write to live files
+- **Backfill protection** - Save current content before switching
+- **Auto-import** - Import from live files on first launch
+- **Modification protection** - Preserve manual modifications
+
+**Technical Implementation**:
+
+- **Backend**: `PromptService` (213 lines)
+- **Frontend**: PromptPanel (177), PromptFormModal (160), MarkdownEditor (159)
+- **Hooks**: usePromptActions (152 lines)
+- **i18n**: 41+ translation keys
+
+#### Deep Link Protocol (ccswitch://)
+
+One-click provider configuration import via URL scheme.
+
+**Features**:
+
+- Protocol registration on all platforms
+- Import from shared links
+- Lifecycle integration
+- Security validation
+
+#### Environment Variable Conflict Detection
+
+Intelligent detection and management of configuration conflicts.
+
+**Detection Scope**:
+
+- **Claude & Codex** - Cross-app conflicts
+- **Gemini** - Auto-discovery
+- **MCP** - Server configuration conflicts
+
+**Management Features**:
+
+- Visual conflict indicators
+- Resolution suggestions
+- Override warnings
+- Backup before changes
+
+### Improvements
+
+#### Provider Management
+
+**New Presets**:
+
+- **DouBaoSeed** - ByteDance's DouBao
+- **Kimi For Coding** - Moonshot AI
+- **BaiLing** - BaiLing AI
+- **Removed AnyRouter** - To avoid confusion
+
+**Enhancements**:
+
+- Model name configuration for Codex and Gemini
+- Provider notes field for organization
+- Enhanced preset metadata
+
+#### Configuration Management
+
+- **Common config migration** - From localStorage to `config.json`
+- **Unified persistence** - Shared across all apps
+- **Auto-import** - First launch configuration import
+- **Backfill priority** - Correct handling of live files
+
+#### UI/UX Improvements
+
+**Design System**:
+
+- **macOS native** - System-aligned color scheme
+- **Window centering** - Default centered position
+- **Visual polish** - Improved spacing and hierarchy
+
+**Interactions**:
+
+- **Password input** - Fixed Edge/IE reveal buttons
+- **URL overflow** - Fixed card overflow
+- **Error copying** - Copy-to-clipboard errors
+- **Tray sync** - Real-time drag-and-drop sync
+
+### Bug Fixes
+
+#### Critical Fixes
+
+- **Usage script validation** - Boundary checks
+- **Gemini validation** - Relaxed constraints
+- **TOML parsing** - CJK quote handling
+- **MCP fields** - Custom field preservation
+- **White screen** - FormLabel crash fix
+
+#### Stability
+
+- **Tray safety** - Pattern matching instead of unwrap
+- **Error isolation** - Tray failures don't block operations
+- **Import classification** - Correct category assignment
+
+#### UI Fixes
+
+- **Model placeholders** - Removed misleading hints
+- **Base URL** - Auto-fill for third-party providers
+- **Drag sort** - Tray menu synchronization
+
+### Technical Improvements
+
+#### Architecture
+
+**MCP v3.7.0**:
+
+- Removed legacy code (~1,000 lines)
+- Unified initialization structure
+- Backward compatibility maintained
+- Comprehensive code formatting
+
+**Platform Compatibility**:
+
+- Windows winreg API fix (v0.52)
+- Safe pattern matching (no `unwrap()`)
+- Cross-platform tray handling
+
+#### Configuration
+
+**Synchronization**:
+
+- MCP sync across all apps
+- Gemini form-editor sync
+- Dual-file reading (.env + settings.json)
+
+**Validation**:
+
+- Input boundary checks
+- TOML quote normalization (CJK)
+- Custom field preservation
+- Enhanced error messages
+
+#### Code Quality
+
+**Type Safety**:
+
+- Complete TypeScript coverage
+- Rust type refinements
+- API contract validation
+
+**Testing**:
+
+- Simplified assertions
+- Better test coverage
+- Integration test updates
+
+**Dependencies**:
+
+- Tauri 2.8.x
+- Rust: `anyhow`, `zip`, `serde_yaml`, `tempfile`
+- Frontend: CodeMirror 6 packages
+- winreg 0.52 (Windows)
+
+### Technical Statistics
+
+```
+Total Changes:
+- Commits: 85
+- Files: 152 changed
+- Additions: +18,104 lines
+- Deletions: -3,732 lines
+
+New Modules:
+- Skills Management: 2,034 lines (21 files)
+- Prompts Management: 1,302 lines (20 files)
+- Gemini Integration: ~1,000 lines
+- MCP Refactor: ~3,000 lines refactored
+
+Code Distribution:
+- Backend (Rust): ~4,500 lines new
+- Frontend (React): ~3,000 lines new
+- Configuration: ~1,500 lines refactored
+- Tests: ~500 lines
+```
+
+### Strategic Positioning
+
+#### From Tool to Platform
+
+v3.7.0 represents a shift in CC Switch's positioning:
+
+| Aspect            | v3.6                     | v3.7.0                       |
+| ----------------- | ------------------------ | ---------------------------- |
+| **Identity**      | Provider Switcher        | AI CLI Management Platform   |
+| **Scope**         | Configuration Management | Ecosystem Management         |
+| **Applications**  | Claude + Codex           | Claude + Codex + Gemini      |
+| **Capabilities**  | Switch configs           | Extend capabilities (Skills) |
+| **Customization** | Manual editing           | Visual management (Prompts)  |
+| **Integration**   | Isolated apps            | Unified management (MCP)     |
+
+#### Six Pillars of AI CLI Management
+
+1. **Configuration Management** - Provider switching and management
+2. **Capability Extension** - Skills installation and lifecycle
+3. **Behavior Customization** - System prompt presets
+4. **Ecosystem Integration** - Deep links and sharing
+5. **Multi-AI Support** - Claude/Codex/Gemini
+6. **Intelligent Detection** - Conflict prevention
+
+### Download & Installation
+
+#### System Requirements
+
+- **Windows**: Windows 10+
+- **macOS**: macOS 10.15 (Catalina)+
+- **Linux**: Ubuntu 22.04+ / Debian 11+ / Fedora 34+
+
+#### Download Links
+
+Visit [Releases](https://github.com/farion1231/cc-switch/releases/latest) to download:
+
+- **Windows**: `CC-Switch-v3.7.0-Windows.msi` or `-Portable.zip`
+- **macOS**: `CC-Switch-v3.7.0-macOS.tar.gz` or `.zip`
+- **Linux**: `CC-Switch-v3.7.0-Linux.AppImage` or `.deb`
+
+#### Homebrew (macOS)
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+Update:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+### Migration Notes
+
+#### From v3.6.x
+
+**Automatic migration** - No action required, configs are fully compatible
+
+#### From v3.1.x or Earlier
+
+**Two-step migration required**:
+
+1. First upgrade to v3.2.x (performs one-time migration)
+2. Then upgrade to v3.7.0
+
+#### New Features
+
+- **Skills**: No migration needed, start fresh
+- **Prompts**: Auto-import from live files on first launch
+- **Gemini**: Install Gemini CLI separately if needed
+- **MCP v3.7.0**: Backward compatible with previous configs
+
+### Acknowledgments
+
+#### Contributors
+
+Thanks to all contributors who made this release possible:
+
+- [@YoVinchen](https://github.com/YoVinchen) - Skills & Prompts & Gemini integration implementation
+- [@farion1231](https://github.com/farion1231) - From developer to issue responder
+- Community members for testing and feedback
+
+#### Sponsors
+
+**Z.ai** - GLM CODING PLAN sponsor
+[Get 10% OFF with this link](https://z.ai/subscribe?ic=8JVLJQFSKB)
+
+**PackyCode** - API relay service partner
+[Register with "cc-switch" code for 10% discount](https://www.packyapi.com/register?aff=cc-switch)
+
+### Feedback & Support
+
+- **Issues**: [GitHub Issues](https://github.com/farion1231/cc-switch/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/farion1231/cc-switch/discussions)
+- **Documentation**: [README](../README.md)
+- **Changelog**: [CHANGELOG.md](../CHANGELOG.md)
+
+### What's Next
+
+**v3.8.0 Preview** (Tentative):
+
+- Local proxy functionality
+
+Stay tuned for more updates!
+
+**Happy Coding!**
+
+---
+
+## [3.6.1] - 1970-01-01
+
+> Stability improvements and user experience optimization (based on v3.6.0)
+
+### 📦 What's New in v3.6.1 (2025-11-10)
+
+This release focuses on **user experience optimization** and **configuration parsing robustness**, fixing several critical bugs and enhancing the usage query system.
+
+#### ✨ New Features
+
+##### Usage Query System Enhancements
+
+- **Credential Decoupling** - Usage queries can now use independent API Key and Base URL, no longer dependent on provider configuration
+  - Support for different query endpoints and authentication methods
+  - Automatically displays credential input fields based on template type
+  - General template: API Key + Base URL
+  - NewAPI template: Base URL + Access Token + User ID
+  - Custom template: Fully customizable
+- **UI Component Upgrade** - Replaced native checkbox with shadcn/ui Switch component for modern experience
+- **Form Unification** - Unified use of shadcn/ui Input components, consistent styling with the application
+- **Password Visibility Toggle** - Added show/hide password functionality (API Key, Access Token)
+
+##### Form Validation Infrastructure
+
+- **Common Schema Library** - New JSON/TOML generic validators to reduce code duplication
+  - `jsonConfigSchema`: Generic JSON object validator
+  - `tomlConfigSchema`: Generic TOML format validator
+  - `mcpJsonConfigSchema`: MCP-specific JSON validator
+- **MCP Conditional Field Validation** - Strict type checking
+  - stdio type requires `command` field
+  - http type requires `url` field
+
+##### Partner Integration
+
+- **PackyCode** - New official partner
+  - Added to Claude and Codex provider presets
+  - 10% discount promotion support
+  - New logo and partner identification
+
+#### 🔧 Improvements
+
+##### User Experience
+
+- **Drag Sort Sync** - Tray menu order now syncs with drag-and-drop sorting in real-time
+- **Enhanced Error Notifications** - Provider switch failures now display copyable error messages
+- **Removed Misleading Placeholders** - Deleted example text from model input fields to avoid user confusion
+- **Auto-fill Base URL** - All non-official provider categories automatically populate the Base URL input field
+
+##### Configuration Parsing
+
+- **CJK Quote Normalization** - Automatically handles IME-input fullwidth quotes to prevent TOML parsing errors
+  - Supports automatic conversion of Chinese quotes (" " ' ') to ASCII quotes
+  - Applied in TOML input handlers
+  - Disabled browser auto-correction in Textarea component
+- **Preserve Custom Fields** - Editing Codex MCP TOML configuration now preserves unknown fields
+  - Supports extension fields like timeout_ms, retry_count
+  - Forward compatibility with future MCP protocol extensions
+
+#### 🐛 Bug Fixes
+
+##### Critical Fixes
+
+- **Fixed usage script panel white screen crash** - FormLabel component missing FormField context caused entire app to crash
+  - Replaced with standalone Label component
+  - Root cause: FormLabel internally calls useFormField() hook which requires FormFieldContext
+- **Fixed CJK input quote parsing failure** - IME-input fullwidth quotes caused TOML parsing errors
+  - Added textNormalization utility function
+  - Automatically normalizes quotes before parsing
+- **Fixed drag sort tray desync** (#179) - Tray menu order not updated after drag-and-drop sorting
+  - Automatically calls updateTrayMenu after sorting completes
+  - Ensures UI and tray menu stay consistent
+- **Fixed MCP custom field loss** - Custom fields silently dropped when editing Codex MCP configuration
+  - Uses spread operator to retain all fields
+  - Preserves unknown fields in normalizeServerConfig
+
+##### Stability Improvements
+
+- **Error Isolation** - Tray menu update failures no longer affect main operations
+  - Decoupled tray update errors from main operations
+  - Provides warning when main operation succeeds but tray update fails
+- **Safe Pattern Matching** - Replaced `unwrap()` with safe pattern matching
+  - Avoids panic-induced app crashes
+  - Tray menu event handling uses match patterns
+- **Import Config Classification** - Importing from default config now automatically sets category to `custom`
+  - Avoids imported configs being mistaken for official presets
+  - Provides clearer configuration source identification
+
+#### 📊 Technical Statistics
+
+```
+Commits: 17 commits
+Code Changes: 31 files
+  - Additions: 1,163 lines
+  - Deletions: 811 lines
+  - Net Growth: +352 lines
+Contributors: Jason (16), ZyphrZero (1)
+```
+
+**By Module**:
+- UI/User Interface: 3 commits
+- Usage Query System: 3 commits
+- Configuration Parsing: 2 commits
+- Form Validation: 1 commit
+- Other Improvements: 8 commits
+
+#### 📥 Installation
+
+##### macOS
+
+**Via Homebrew (Recommended):**
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+**Manual Download:**
+
+- Download `CC-Switch-v3.6.1-macOS.zip` from [Assets](#assets) below
+
+> **Note**: Due to lack of Apple Developer account, you may see "unidentified developer" warning. Go to System Settings → Privacy & Security → Click "Open Anyway"
+
+##### Windows
+
+- **Installer**: `CC-Switch-v3.6.1-Windows.msi`
+- **Portable**: `CC-Switch-v3.6.1-Windows-Portable.zip`
+
+##### Linux
+
+- **AppImage**: `CC-Switch-v3.6.1-Linux.AppImage`
+- **Debian**: `CC-Switch-v3.6.1-Linux.deb`
+
+#### 📚 Documentation
+
+- [中文文档 (Chinese)](https://github.com/farion1231/cc-switch/blob/main/README_ZH.md)
+- [English Documentation](https://github.com/farion1231/cc-switch/blob/main/README.md)
+- [完整更新日志 (Full Changelog)](https://github.com/farion1231/cc-switch/blob/main/CHANGELOG.md)
+
+#### 🙏 Acknowledgments
+
+Special thanks to:
+- **Zhipu AI** - For sponsoring this project with GLM CODING PLAN
+- **PackyCode** - New official partner
+- **ZyphrZero** - For contributing tray menu sync fix (#179)
+
+**Full Changelog**: https://github.com/farion1231/cc-switch/compare/v3.6.0...v3.6.1
+
+### 📜 v3.6.0 Complete Feature Review
+
+> Content below is from v3.6.0 (2025-11-07), helping you understand the complete feature set
+
+<details>
+<summary><b>Click to expand v3.6.0 detailed content →</b></summary>
+
+### What's New
+
+#### Edit Mode & Provider Management
+
+- **Provider Duplication** - Quickly duplicate existing provider configurations to create variants with one click
+- **Manual Sorting** - Drag and drop to reorder providers, with visual push effect animations. Thanks to @ZyphrZero
+- **Edit Mode Toggle** - Show/hide drag handles to optimize editing experience
+
+#### Custom Endpoint Management
+
+- **Multi-Endpoint Configuration** - Support for aggregator providers with multiple API endpoints
+- **Endpoint Input Visibility** - Shows endpoint field for all non-official providers automatically
+
+#### Usage Query Enhancements
+
+- **Auto-Refresh Interval** - Configure periodic automatic usage queries with customizable intervals
+- **Test Script API** - Validate JavaScript usage query scripts before execution
+- **Enhanced Templates** - Custom blank templates with access token and user ID parameter support
+  Thanks to @Sirhexs
+
+#### Custom Configuration Directory (Cloud Sync)
+
+- **Customizable Storage Location** - Customize CC Switch's configuration storage directory
+- **Cloud Sync Support** - Point to cloud sync folders (Dropbox, OneDrive, iCloud Drive, etc.) to enable automatic config synchronization across devices
+- **Independent Management** - Managed via Tauri Store for better isolation and reliability
+  Thanks to @ZyphrZero
+
+#### Configuration Directory Switching (WSL Support)
+
+- **Auto-Sync on Directory Change** - When switching Claude/Codex config directories (e.g., WSL environment), automatically sync current provider to the new directory without manual operation
+- **Post-Change Sync Utility** - Unified `postChangeSync.ts` utility for graceful error handling without blocking main flow
+- **Import Config Auto-Sync** - Automatically sync after config import to ensure immediate effectiveness
+- **Smart Conflict Resolution** - Distinguishes "fully successful" and "partially successful" states for precise user feedback
+
+#### Configuration Editor Improvements
+
+- **JSON Format Button** - One-click JSON formatting in configuration editors
+- **Real-Time TOML Validation** - Live syntax validation for Codex configuration with error highlighting
+
+#### Load Live Config When Editing
+
+- **Protect Manual Modifications** - When editing the currently active provider, prioritize displaying the actual effective configuration from live files
+- **Dual-Source Strategy** - Automatically loads from live config for active provider, SSOT for inactive ones
+
+#### Claude Configuration Data Structure Enhancements
+
+- **Granular Model Configuration** - Migrated from dual-key to quad-key system for better model tier differentiation
+  - New fields: `ANTHROPIC_DEFAULT_HAIKU_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_MODEL`
+  - Replaces legacy `ANTHROPIC_SMALL_FAST_MODEL` with automatic migration
+  - Backend normalizes old configs on first read/write with smart fallback chain
+  - UI expanded from 2 to 4 model input fields with intelligent defaults
+- **ANTHROPIC_API_KEY Support** - Providers can now use `ANTHROPIC_API_KEY` field in addition to `ANTHROPIC_AUTH_TOKEN`
+- **Template Variable System** - Support for dynamic configuration replacement (e.g., KAT-Coder's `ENDPOINT_ID` parameter)
+- **Endpoint Candidates** - Predefined endpoint list for speed testing and endpoint management
+- **Visual Theme Configuration** - Custom icons and colors for provider cards
+
+#### Updated Provider Models
+
+- **Kimi k2** - Updated to latest `kimi-k2-thinking` model
+
+#### New Provider Presets
+
+Added 5 new provider presets:
+
+- **DMXAPI** - Multi-model aggregation service
+- **Azure Codex** - Microsoft Azure OpenAI endpoint
+- **AnyRouter** - None-profit routing service
+- **AiHubMix** - Multi-model aggregation service
+- **MiniMax** - Open source AI model provider
+
+#### Partner Promotion Mechanism
+
+- Support for ecosystem partner promotion (Zhipu GLM Z.ai)
+- Sponsored banner integration in README
+
+### Improvements
+
+#### Configuration & Sync
+
+- **Unified Error Handling** - AppError with internationalized error messages throughout backend
+- **Fixed apiKeyUrl Priority** - Correct priority order for API key URL resolution
+- **Fixed MCP Sync Issues** - Resolved sync-to-other-side functionality failures
+- **Import Config Sync** - Fixed sync issues after configuration import
+- **Config Error Handling** - Force exit on config error to prevent silent fallback and data loss
+
+#### UI/UX Enhancements
+
+- **Unique Provider Icons** - Each provider card now has unique icons and color identification
+- **Unified Border System** - Consistent border design across all components
+- **Drag Interaction** - Push effect animation and improved drag handle icons
+- **Enhanced Visual Feedback** - Better current provider visual indication
+- **Dialog Standardization** - Unified dialog sizes and layout consistency
+- **Form Improvements** - Optimized model placeholders, simplified provider hints, category-specific hints
+- **Usage Display Inline** - Usage info moved next to enable button for better space utilization
+
+#### Complete Internationalization
+
+- **Error Messages i18n** - All backend error messages support Chinese/English
+- **Tray Menu i18n** - System tray menu fully internationalized
+- **UI Components i18n** - 100% coverage across all user-facing components
+
+### Bug Fixes
+
+#### Configuration Management
+
+- Fixed `apiKeyUrl` priority issue
+- Fixed MCP sync-to-other-side functionality failure
+- Fixed sync issues after config import
+- Fixed Codex API Key auto-sync
+- Fixed endpoint speed test functionality
+- Fixed provider duplicate insertion position (now inserts next to original)
+- Fixed custom endpoint preservation in edit mode
+- Prevent silent fallback and data loss on config error
+
+#### Usage Query
+
+- Fixed auto-query interval timing issue
+- Ensured refresh button shows loading animation on click
+
+#### UI Issues
+
+- Fixed name collision error (`get_init_error` command)
+- Fixed language setting rollback after successful save
+- Fixed language switch state reset (dependency cycle)
+- Fixed edit mode button alignment
+
+#### Startup Issues
+
+- Force exit on config error (no silent fallback)
+- Eliminated code duplication causing initialization errors
+
+### Architecture Refactoring
+
+#### Backend (Rust) - 5 Phase Refactoring
+
+1. **Phase 1**: Unified error handling (`AppError` + i18n error messages)
+2. **Phase 2**: Command layer split by domain (`commands/{provider,mcp,config,settings,plugin,misc}.rs`)
+3. **Phase 3**: Integration tests and transaction mechanism (config snapshot + failure rollback)
+4. **Phase 4**: Extracted Service layer (`services/{provider,mcp,config,speedtest}.rs`)
+5. **Phase 5**: Concurrency optimization (`RwLock` instead of `Mutex`, scoped guard to avoid deadlock)
+
+#### Frontend (React + TypeScript) - 4 Stage Refactoring
+
+1. **Stage 1**: Test infrastructure (vitest + MSW + @testing-library/react)
+2. **Stage 2**: Extracted custom hooks (`useProviderActions`, `useMcpActions`, `useSettings`, `useImportExport`, etc.)
+3. **Stage 3**: Component splitting and business logic extraction
+4. **Stage 4**: Code cleanup and formatting unification
+
+#### Testing System
+
+- **Hooks Unit Tests** - 100% coverage for all custom hooks
+- **Integration Tests** - Coverage for key processes (App, SettingsDialog, MCP Panel)
+- **MSW Mocking** - Backend API mocking to ensure test independence
+- **Test Infrastructure** - vitest + MSW + @testing-library/react
+
+#### Code Quality
+
+- **Unified Parameter Format** - All Tauri commands migrated to camelCase (Tauri 2 specification)
+- **Semantic Clarity** - `AppType` renamed to `AppId` for better semantics
+- **Centralized Parsing** - Unified `app` parameter parsing with `FromStr` trait
+- **DRY Violations Cleanup** - Eliminated code duplication throughout codebase
+- **Dead Code Removal** - Removed unused `missing_param` helper, deprecated `tauri-api.ts`, redundant `KimiModelSelector`
+
+### Internal Optimizations (User Transparent)
+
+#### Removed Legacy Migration Logic
+
+v3.6.0 removed v1 config auto-migration and copy file scanning logic:
+
+- **Impact**: Improved startup performance, cleaner codebase
+- **Compatibility**: v2 format configs fully compatible, no action required
+- **Note**: Users upgrading from v3.1.0 or earlier should first upgrade to v3.2.x or v3.5.x for one-time migration, then upgrade to v3.6.0
+
+#### Command Parameter Standardization
+
+Backend unified to use `app` parameter (values: `claude` or `codex`):
+
+- **Impact**: More standardized code, friendlier error prompts
+- **Compatibility**: Frontend fully adapted, users don't need to care about this change
+
+### Dependencies
+
+- Updated to **Tauri 2.8.x**
+- Updated to **TailwindCSS 4.x**
+- Updated to **TanStack Query v5.90.x**
+- Maintained **React 18.2.x** and **TypeScript 5.3.x**
+
+</details>
+
+### 🌟 About CC Switch
+
+CC Switch is a cross-platform desktop application for managing and switching between different provider configurations for Claude Code and Codex. Built with Tauri 2.0 + React 18 + TypeScript, supporting Windows, macOS, and Linux.
+
+**Core Features**:
+- 🔄 One-click switching between multiple AI providers
+- 📦 Support for both Claude Code and Codex applications
+- 🎨 Modern UI with complete Chinese/English internationalization
+- 🔐 Local storage, secure and reliable data
+- ☁️ Support for cloud sync configurations
+- 🧩 Unified MCP server management
+
+**Project Repository**: https://github.com/farion1231/cc-switch
+
+---
+
+## [3.6.0] - 2025-11-07
+
+### Major architecture refactoring with enhanced config sync and data protection
+
+### What's New
+
+#### Edit Mode & Provider Management
+
+- **Provider Duplication** - Quickly duplicate existing provider configurations to create variants with one click
+- **Manual Sorting** - Drag and drop to reorder providers, with visual push effect animations. Thanks to @ZyphrZero
+- **Edit Mode Toggle** - Show/hide drag handles to optimize editing experience
+
+#### Custom Endpoint Management
+
+- **Multi-Endpoint Configuration** - Support for aggregator providers with multiple API endpoints
+- **Endpoint Input Visibility** - Shows endpoint field for all non-official providers automatically
+
+#### Usage Query Enhancements
+
+- **Auto-Refresh Interval** - Configure periodic automatic usage queries with customizable intervals
+- **Test Script API** - Validate JavaScript usage query scripts before execution
+- **Enhanced Templates** - Custom blank templates with access token and user ID parameter support
+  Thanks to @Sirhexs
+
+#### Custom Configuration Directory (Cloud Sync)
+
+- **Customizable Storage Location** - Customize CC Switch's configuration storage directory
+- **Cloud Sync Support** - Point to cloud sync folders (Dropbox, OneDrive, iCloud Drive, etc.) to enable automatic config synchronization across devices
+- **Independent Management** - Managed via Tauri Store for better isolation and reliability
+  Thanks to @ZyphrZero
+
+#### Configuration Directory Switching (WSL Support)
+
+- **Auto-Sync on Directory Change** - When switching Claude/Codex config directories (e.g., WSL environment), automatically sync current provider to the new directory without manual operation
+- **Post-Change Sync Utility** - Unified `postChangeSync.ts` utility for graceful error handling without blocking main flow
+- **Import Config Auto-Sync** - Automatically sync after config import to ensure immediate effectiveness
+- **Smart Conflict Resolution** - Distinguishes "fully successful" and "partially successful" states for precise user feedback
+
+#### Configuration Editor Improvements
+
+- **JSON Format Button** - One-click JSON formatting in configuration editors
+- **Real-Time TOML Validation** - Live syntax validation for Codex configuration with error highlighting
+
+#### Load Live Config When Editing
+
+- **Protect Manual Modifications** - When editing the currently active provider, prioritize displaying the actual effective configuration from live files
+- **Dual-Source Strategy** - Automatically loads from live config for active provider, SSOT for inactive ones
+
+#### Claude Configuration Data Structure Enhancements
+
+- **Granular Model Configuration** - Migrated from dual-key to quad-key system for better model tier differentiation
+  - New fields: `ANTHROPIC_DEFAULT_HAIKU_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_MODEL`
+  - Replaces legacy `ANTHROPIC_SMALL_FAST_MODEL` with automatic migration
+  - Backend normalizes old configs on first read/write with smart fallback chain
+  - UI expanded from 2 to 4 model input fields with intelligent defaults
+- **ANTHROPIC_API_KEY Support** - Providers can now use `ANTHROPIC_API_KEY` field in addition to `ANTHROPIC_AUTH_TOKEN`
+- **Template Variable System** - Support for dynamic configuration replacement (e.g., KAT-Coder's `ENDPOINT_ID` parameter)
+- **Endpoint Candidates** - Predefined endpoint list for speed testing and endpoint management
+- **Visual Theme Configuration** - Custom icons and colors for provider cards
+
+#### Updated Provider Models
+
+- **Kimi k2** - Updated to latest `kimi-k2-thinking` model
+
+#### New Provider Presets
+
+Added 5 new provider presets:
+
+- **DMXAPI** - Multi-model aggregation service
+- **Azure Codex** - Microsoft Azure OpenAI endpoint
+- **AnyRouter** - None-profit routing service
+- **AiHubMix** - Multi-model aggregation service
+- **MiniMax** - Open source AI model provider
+
+#### Partner Promotion Mechanism
+
+- Support for ecosystem partner promotion (Zhipu GLM Z.ai)
+- Sponsored banner integration in README
+
+### Improvements
+
+#### Configuration & Sync
+
+- **Unified Error Handling** - AppError with internationalized error messages throughout backend
+- **Fixed apiKeyUrl Priority** - Correct priority order for API key URL resolution
+- **Fixed MCP Sync Issues** - Resolved sync-to-other-side functionality failures
+- **Import Config Sync** - Fixed sync issues after configuration import
+- **Config Error Handling** - Force exit on config error to prevent silent fallback and data loss
+
+#### UI/UX Enhancements
+
+- **Unique Provider Icons** - Each provider card now has unique icons and color identification
+- **Unified Border System** - Consistent border design across all components
+- **Drag Interaction** - Push effect animation and improved drag handle icons
+- **Enhanced Visual Feedback** - Better current provider visual indication
+- **Dialog Standardization** - Unified dialog sizes and layout consistency
+- **Form Improvements** - Optimized model placeholders, simplified provider hints, category-specific hints
+- **Usage Display Inline** - Usage info moved next to enable button for better space utilization
+
+#### Complete Internationalization
+
+- **Error Messages i18n** - All backend error messages support Chinese/English
+- **Tray Menu i18n** - System tray menu fully internationalized
+- **UI Components i18n** - 100% coverage across all user-facing components
+
+### Bug Fixes
+
+#### Configuration Management
+
+- Fixed `apiKeyUrl` priority issue
+- Fixed MCP sync-to-other-side functionality failure
+- Fixed sync issues after config import
+- Fixed Codex API Key auto-sync
+- Fixed endpoint speed test functionality
+- Fixed provider duplicate insertion position (now inserts next to original)
+- Fixed custom endpoint preservation in edit mode
+- Prevent silent fallback and data loss on config error
+
+#### Usage Query
+
+- Fixed auto-query interval timing issue
+- Ensured refresh button shows loading animation on click
+
+#### UI Issues
+
+- Fixed name collision error (`get_init_error` command)
+- Fixed language setting rollback after successful save
+- Fixed language switch state reset (dependency cycle)
+- Fixed edit mode button alignment
+
+#### Startup Issues
+
+- Force exit on config error (no silent fallback)
+- Eliminated code duplication causing initialization errors
+
+### Architecture Refactoring
+
+#### Backend (Rust) - 5 Phase Refactoring
+
+1. **Phase 1**: Unified error handling (`AppError` + i18n error messages)
+2. **Phase 2**: Command layer split by domain (`commands/{provider,mcp,config,settings,plugin,misc}.rs`)
+3. **Phase 3**: Integration tests and transaction mechanism (config snapshot + failure rollback)
+4. **Phase 4**: Extracted Service layer (`services/{provider,mcp,config,speedtest}.rs`)
+5. **Phase 5**: Concurrency optimization (`RwLock` instead of `Mutex`, scoped guard to avoid deadlock)
+
+#### Frontend (React + TypeScript) - 4 Stage Refactoring
+
+1. **Stage 1**: Test infrastructure (vitest + MSW + @testing-library/react)
+2. **Stage 2**: Extracted custom hooks (`useProviderActions`, `useMcpActions`, `useSettings`, `useImportExport`, etc.)
+3. **Stage 3**: Component splitting and business logic extraction
+4. **Stage 4**: Code cleanup and formatting unification
+
+#### Testing System
+
+- **Hooks Unit Tests** - 100% coverage for all custom hooks
+- **Integration Tests** - Coverage for key processes (App, SettingsDialog, MCP Panel)
+- **MSW Mocking** - Backend API mocking to ensure test independence
+- **Test Infrastructure** - vitest + MSW + @testing-library/react
+
+#### Code Quality
+
+- **Unified Parameter Format** - All Tauri commands migrated to camelCase (Tauri 2 specification)
+- **Semantic Clarity** - `AppType` renamed to `AppId` for better semantics
+- **Centralized Parsing** - Unified `app` parameter parsing with `FromStr` trait
+- **DRY Violations Cleanup** - Eliminated code duplication throughout codebase
+- **Dead Code Removal** - Removed unused `missing_param` helper, deprecated `tauri-api.ts`, redundant `KimiModelSelector`
+
+### Internal Optimizations (User Transparent)
+
+#### Removed Legacy Migration Logic
+
+v3.6.0 removed v1 config auto-migration and copy file scanning logic:
+
+- **Impact**: Improved startup performance, cleaner codebase
+- **Compatibility**: v2 format configs fully compatible, no action required
+- **Note**: Users upgrading from v3.1.0 or earlier should first upgrade to v3.2.x or v3.5.x for one-time migration, then upgrade to v3.6.0
+
+#### Command Parameter Standardization
+
+Backend unified to use `app` parameter (values: `claude` or `codex`):
+
+- **Impact**: More standardized code, friendlier error prompts
+- **Compatibility**: Frontend fully adapted, users don't need to care about this change
+
+### Dependencies
+
+- Updated to **Tauri 2.8.x**
+- Updated to **TailwindCSS 4.x**
+- Updated to **TanStack Query v5.90.x**
+- Maintained **React 18.2.x** and **TypeScript 5.3.x**
+
+### Installation
+
+#### macOS
+
+**Via Homebrew (Recommended):**
+
+```bash
+brew tap farion1231/ccswitch
+brew install --cask cc-switch
+```
+
+**Manual Download:**
+
+- Download `CC-Switch-v3.6.0-macOS.zip` from [Assets](#assets) below
+
+> **Note**: Due to lack of Apple Developer account, you may see "unidentified developer" warning. Go to System Settings → Privacy & Security → Click "Open Anyway"
+
+#### Windows
+
+- **Installer**: `CC-Switch-v3.6.0-Windows.msi`
+- **Portable**: `CC-Switch-v3.6.0-Windows-Portable.zip`
+
+#### Linux
+
+- **AppImage**: `CC-Switch-v3.6.0-Linux.AppImage`
+- **Debian**: `CC-Switch-v3.6.0-Linux.deb`
+
+### Documentation
+
+- [中文文档 (Chinese)](https://github.com/farion1231/cc-switch/blob/main/README_ZH.md)
+- [English Documentation](https://github.com/farion1231/cc-switch/blob/main/README.md)
+- [完整更新日志 (Full Changelog)](https://github.com/farion1231/cc-switch/blob/main/CHANGELOG.md)
+
+### Acknowledgments
+
+Special thanks to **Zhipu AI** for sponsoring this project with their GLM CODING PLAN!
+
+**Full Changelog**: https://github.com/farion1231/cc-switch/compare/v3.5.1...v3.6.0

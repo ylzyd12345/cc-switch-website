@@ -9,31 +9,41 @@ import { getVersionTocItems, parseChangelog, stripChangelogVersionHeading } from
 import { useLanguage } from '@/i18n/useLanguage';
 
 export default function ChangelogPage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [activeVersion, setActiveVersion] = useState<string>('');
   const [changelogMarkdown, setChangelogMarkdown] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  // Fetch changelog from local file
   useEffect(() => {
-    fetch('/docs/CHANGELOG.md')
+    let isActive = true;
+
+    setIsLoading(true);
+    setActiveVersion('');
+
+    fetch(`/docs/changelog/${language}.md`)
       .then(res => res.text())
       .then(content => {
+        if (!isActive) return;
         setChangelogMarkdown(content);
         setIsLoading(false);
       })
       .catch(() => {
-        setChangelogMarkdown('# 加载失败\n\n无法加载更新日志，请稍后重试。');
+        if (!isActive) return;
+        setChangelogMarkdown(`# ${t.changelog.error}\n\n${t.changelog.description}`);
         setIsLoading(false);
       });
-  }, []);
+
+    return () => {
+      isActive = false;
+    };
+  }, [language, t.changelog.description, t.changelog.error]);
 
   const versions = useMemo(() => parseChangelog(changelogMarkdown), [changelogMarkdown]);
 
   // Set first version as active and expanded by default
   useEffect(() => {
-    if (versions.length > 0 && !activeVersion) {
+    if (versions.length > 0 && !versions.some((version) => version.version === activeVersion)) {
       setActiveVersion(versions[0].version);
     }
   }, [versions, activeVersion]);
@@ -202,7 +212,7 @@ export default function ChangelogPage() {
         <button
           onClick={() => setIsMobileNavOpen(true)}
           className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-          aria-label="打开版本列表"
+          aria-label={t.changelog.openVersions}
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -233,7 +243,7 @@ export default function ChangelogPage() {
                   <button
                     onClick={() => setIsMobileNavOpen(false)}
                     className="p-2 rounded-lg hover:bg-muted transition-colors"
-                    aria-label="关闭"
+                    aria-label={t.changelog.closeVersions}
                   >
                     <X className="w-5 h-5" />
                   </button>
