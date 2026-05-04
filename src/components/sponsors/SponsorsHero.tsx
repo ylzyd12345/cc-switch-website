@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Heart, Mail } from 'lucide-react';
 import { useLanguage } from '@/i18n/useLanguage';
 import { SPONSOR_CONTACT_EMAIL, SPONSOR_CONTACT_URL } from '@/lib/seo';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function SponsorsHero() {
   const { t } = useLanguage();
@@ -35,7 +37,10 @@ export function SponsorsHero() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
               href={SPONSOR_CONTACT_URL}
-              className="hero-gradient inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md sm:w-auto md:text-base"
+              className={cn(
+                buttonVariants({ variant: 'hero', shape: 'pill' }),
+                'w-full px-6 py-3 text-sm font-medium shadow-sm hover:shadow-md sm:w-auto md:text-base',
+              )}
             >
               <Heart className="h-4 w-4" />
               {copy.becomeSponsor}

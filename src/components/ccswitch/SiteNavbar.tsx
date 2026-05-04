@@ -193,7 +193,7 @@ export function SiteNavbar() {
                 className="pt-6 flex flex-col gap-4"
               >
                 <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer" className="w-full">
-                  <Button className="w-full hero-gradient text-white py-6 text-lg gap-2">
+                  <Button variant="hero" className="w-full py-6 text-lg">
                     <Download className="w-5 h-5" />
                     {t.nav.download}
                   </Button>

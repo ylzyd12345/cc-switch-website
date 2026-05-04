@@ -7,6 +7,8 @@ import { featuredSponsors } from '@/content/sponsors';
 import { fadeInUpStaggerContainer } from '@/lib/motion';
 import { SPONSOR_CONTACT_URL } from '@/lib/seo';
 import { SponsorCard } from '@/components/sponsors/SponsorCard';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { SectionHeader } from './SectionHeader';
 
 export function SponsorsSection() {
@@ -46,10 +48,10 @@ export function SponsorsSection() {
                 >
                     <Link
                         to={getLocalizedPath('/sponsors', language)}
-                        className="hero-gradient inline-flex items-center gap-2 px-6 py-3 rounded-full
-                            text-white
-                            hover:opacity-90 hover:shadow-md
-                            transition-all duration-300 group"
+                        className={cn(
+                            buttonVariants({ variant: 'hero', shape: 'pill' }),
+                            'gap-2 px-6 py-3 hover:shadow-md duration-300 group',
+                        )}
                     >
                         <span>{copy.viewAll}</span>
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

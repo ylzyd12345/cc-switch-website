@@ -83,7 +83,8 @@ export function HeroSection() {
                 <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto hero-gradient text-white hover:opacity-90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all px-6 md:px-10 py-6 md:py-7 text-base sm:text-lg md:text-xl font-semibold gap-2"
+                    variant="hero"
+                    className="w-full sm:w-auto shadow-xl hover:shadow-2xl hover:scale-105 px-6 md:px-10 py-6 md:py-7 text-base sm:text-lg md:text-xl font-semibold"
                   >
                     <Download className="w-5 h-5" />
                     {t.hero.downloadBtn}
