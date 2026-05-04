@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./i18n/LanguageProvider";
 import { useLanguage } from "./i18n/useLanguage";
 import { Seo } from "./components/seo/Seo";
+import { SiteNavbar } from "./components/ccswitch/SiteNavbar";
 import NotFound from "./pages/NotFound";
 
 const CCSwitchHome = lazy(() => import("./pages/CCSwitchHome"));
@@ -28,6 +29,7 @@ const App = () => (
       <Seo />
       <Toaster />
       <Sonner />
+      <SiteNavbar />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<CCSwitchHome />} />

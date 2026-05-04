@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Menu } from 'lucide-react';
-import { SiteNavbar } from '@/components/ccswitch/SiteNavbar';
 import { SiteFooter } from '@/components/ccswitch/SiteFooter';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorBlock } from '@/components/ui/error-block';
@@ -141,8 +140,6 @@ export default function ChangelogPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteNavbar />
-
       <main className="pt-20 md:pt-24">
         <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           {!index && !indexError ? (

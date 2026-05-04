@@ -1,4 +1,3 @@
-import { SiteNavbar } from '@/components/ccswitch/SiteNavbar';
 import { HeroSection } from '@/components/ccswitch/HeroSection';
 import { SponsorsSection } from '@/components/ccswitch/SponsorsSection';
 import { FeaturesSection } from '@/components/ccswitch/FeaturesSection';
@@ -12,7 +11,6 @@ import { SiteFooter } from '@/components/ccswitch/SiteFooter';
 export default function CCSwitchHome() {
   return (
     <div className="min-h-screen bg-background">
-      <SiteNavbar />
       <main>
         <HeroSection />
         <SponsorsSection />

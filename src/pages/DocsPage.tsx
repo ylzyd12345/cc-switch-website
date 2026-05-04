@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { SiteNavbar } from '@/components/ccswitch/SiteNavbar';
 import { DocsSidebar } from '@/components/docs/DocsSidebar';
 import { DocsMobileNav } from '@/components/docs/DocsMobileNav';
 import { MarkdownRenderer } from '@/components/docs/MarkdownRenderer';
@@ -91,8 +90,6 @@ export default function DocsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteNavbar />
-      
       {/* Search Modal */}
       <DocsSearch
         isOpen={isSearchOpen}
