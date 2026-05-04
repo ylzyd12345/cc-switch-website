@@ -1,0 +1,100 @@
+{
+  "versions": [
+    {
+      "version": "3.14.1",
+      "date": "2026-04-23",
+      "isPreRelease": false,
+      "summary": "托盘用量可见化、Codex OAuth 多项稳定性修复、Skills 导入/安装可靠性提升、Hermes 配置健康扫描器移除"
+    },
+    {
+      "version": "3.14.0",
+      "date": "2026-04-21",
+      "isPreRelease": false,
+      "summary": "Hermes Agent 成为第 6 个受管应用、Claude Opus 4.7 全面接入、Gemini Native API 代理、Local Routing 统一重命名、应用级窗口控件"
+    },
+    {
+      "version": "3.13.0",
+      "date": "2026-04-10",
+      "isPreRelease": false,
+      "summary": "轻量模式、配额与余额展示、供应商模型自动获取、Codex OAuth 反向代理、托盘按应用分级菜单"
+    },
+    {
+      "version": "3.12.3",
+      "date": "2026-03-24",
+      "isPreRelease": false,
+      "summary": "GitHub Copilot 反向代理、macOS 代码签名与公证、Reasoning Effort 映射、Tool Search 环境变量开关、Skill 备份/恢复生命周期"
+    },
+    {
+      "version": "3.12.2",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "代理接管期间通用配置保护、Snippet 生命周期稳定性、Codex TOML Section 感知编辑"
+    },
+    {
+      "version": "3.12.1",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "稳定性修复、StepFun 预设、OpenClaw authHeader 支持，以及新赞助商伙伴"
+    },
+    {
+      "version": "3.12.0",
+      "date": "2026-03-09",
+      "isPreRelease": false,
+      "summary": "Stream Check 回归，OpenAI Responses API 上线，OpenClaw 与 WebDAV 迎来一次大升级"
+    },
+    {
+      "version": "3.11.1",
+      "date": "2026-02-28",
+      "isPreRelease": false,
+      "summary": "回退部分键值合并、恢复通用配置片段与多项修复"
+    },
+    {
+      "version": "3.11.0",
+      "date": "2026-02-26",
+      "isPreRelease": false,
+      "summary": "OpenClaw 支持、会话管理器、备份管理与 50+ 项改进"
+    },
+    {
+      "version": "3.10.0",
+      "date": "2026-01-21",
+      "isPreRelease": false,
+      "summary": "OpenCode 支持、全局代理、Claude Rectifier 与多应用体验增强"
+    },
+    {
+      "version": "3.9.0",
+      "date": "2026-01-07",
+      "isPreRelease": false,
+      "summary": "本地 API 代理、自动故障切换、统一供应商与多应用工作流增强"
+    },
+    {
+      "version": "3.8.0",
+      "date": "2025-11-28",
+      "isPreRelease": false,
+      "summary": "持久化架构升级，为云同步奠定基础"
+    },
+    {
+      "version": "3.7.1",
+      "date": "2025-11-22",
+      "isPreRelease": false,
+      "summary": "稳定性增强与用户体验改进"
+    },
+    {
+      "version": "3.7.0",
+      "date": "2025-11-19",
+      "isPreRelease": false,
+      "summary": "从供应商切换器到 AI CLI 一体化管理平台"
+    },
+    {
+      "version": "3.6.1",
+      "date": "1970-01-01",
+      "isPreRelease": false,
+      "summary": "稳定性提升与用户体验优化（基于 v3.6.0）"
+    },
+    {
+      "version": "3.6.0",
+      "date": "2025-11-07",
+      "isPreRelease": false,
+      "summary": "全栈架构重构，增强配置同步与数据保护"
+    }
+  ]
+}

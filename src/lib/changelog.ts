@@ -7,6 +7,17 @@ export interface ChangelogVersion {
   isPreRelease: boolean;
 }
 
+export interface ChangelogIndexEntry {
+  version: string;
+  date: string;
+  isPreRelease: boolean;
+  summary?: string;
+}
+
+export interface ChangelogIndex {
+  versions: ChangelogIndexEntry[];
+}
+
 export interface ChangelogTocItem {
   text: string;
   id: string;
@@ -36,27 +47,23 @@ const sectionTitleExclusions = new Set([
   'strategic positioning',
 ]);
 
-export function parseChangelog(markdown: string): ChangelogVersion[] {
-  const entries: ChangelogVersion[] = [];
-  const versionRegex = /^## \[([^\]]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/gm;
-  const parts = markdown.split(versionRegex);
+const VERSION_HEADING = /^## \[([^\]]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m;
 
-  for (let i = 1; i < parts.length; i += 3) {
-    const version = parts[i];
-    const date = parts[i + 1];
-    const content = parts[i + 2]?.trim() ?? '';
+export function parseSingleVersion(markdown: string): ChangelogVersion | null {
+  const match = markdown.match(VERSION_HEADING);
+  if (!match) return null;
+  const version = match[1];
+  const date = match[2];
+  return {
+    version,
+    date,
+    content: markdown.trim(),
+    isPreRelease: isPreRelease(version),
+  };
+}
 
-    if (version && date) {
-      entries.push({
-        version,
-        date,
-        content: `## [${version}] - ${date}\n\n${content}`,
-        isPreRelease: version.includes('-') || version.includes('beta') || version.includes('alpha'),
-      });
-    }
-  }
-
-  return entries;
+export function isPreRelease(version: string): boolean {
+  return version.includes('-') || version.includes('beta') || version.includes('alpha');
 }
 
 export function stripChangelogVersionHeading(content: string) {
@@ -69,7 +76,7 @@ export function getVersionTocItems(content: string): ChangelogTocItem[] {
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(content)) !== null) {
-    const text = match[1].trim().replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '');
+    const text = match[1].trim().replace(/^[\p{Extended_Pictographic}️\s]+/u, '');
     const lowerText = text.toLowerCase();
     if (sectionTitleExclusions.has(lowerText)) continue;
 

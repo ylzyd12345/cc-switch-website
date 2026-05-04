@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const siteUrl = (process.env.VITE_SITE_URL || 'https://ccswitch.io').replace(/\/+$/, '');
@@ -72,17 +72,70 @@ const routePaths = [
   )),
 ];
 
-const urls = routePaths.flatMap((path) => (
-  languages.map((language) => ({ path, language: language.code }))
+// Per-language changelog version paths. A version is only included for a
+// language whose split index actually contains it — old versions sometimes
+// aren't translated, and we don't want hreflang alternates pointing at 404s.
+function loadChangelogVersionsByLanguage() {
+  const result = new Map();
+  for (const language of languages) {
+    try {
+      const raw = readFileSync(`public/docs/changelog/${language.code}/index.json`, 'utf8');
+      const parsed = JSON.parse(raw);
+      const versions = (parsed.versions ?? []).map((entry) => entry.version);
+      result.set(language.code, new Set(versions));
+    } catch {
+      result.set(language.code, new Set());
+    }
+  }
+  return result;
+}
+
+const changelogVersionsByLang = loadChangelogVersionsByLanguage();
+const allChangelogVersions = new Set();
+for (const versions of changelogVersionsByLang.values()) {
+  for (const v of versions) allChangelogVersions.add(v);
+}
+
+const sharedUrls = routePaths.flatMap((path) => (
+  languages.map((language) => ({
+    path,
+    language: language.code,
+    alternates: languages.map((alt) => alt.code),
+  }))
 ));
+
+const changelogUrls = [];
+for (const version of allChangelogVersions) {
+  const supportedLangs = languages.filter((lang) => changelogVersionsByLang.get(lang.code)?.has(version));
+  if (supportedLangs.length === 0) continue;
+  for (const language of supportedLangs) {
+    changelogUrls.push({
+      path: `/changelog/${version}`,
+      language: language.code,
+      alternates: supportedLangs.map((lang) => lang.code),
+    });
+  }
+}
+
+const urls = [...sharedUrls, ...changelogUrls];
+
+function alternateLinks(alternates, path) {
+  const tags = alternates.map((code) => {
+    const lang = languages.find((l) => l.code === code);
+    return `    <xhtml:link rel="alternate" hreflang="${lang.hreflang}" href="${escapeXml(absoluteUrl(path, code))}" />`;
+  });
+  if (alternates.includes('zh')) {
+    tags.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(absoluteUrl(path, 'zh'))}" />`);
+  }
+  return tags.join('\n');
+}
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${urls.map(({ path, language }) => `  <url>
+${urls.map(({ path, language, alternates }) => `  <url>
     <loc>${escapeXml(absoluteUrl(path, language))}</loc>
     <lastmod>${lastmod}</lastmod>
-${languages.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${alternate.hreflang}" href="${escapeXml(absoluteUrl(path, alternate.code))}" />`).join('\n')}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(absoluteUrl(path, 'zh'))}" />
+${alternateLinks(alternates, path)}
   </url>`).join('\n')}
 </urlset>
 `;

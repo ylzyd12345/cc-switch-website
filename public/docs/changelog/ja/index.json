@@ -1,0 +1,76 @@
+{
+  "versions": [
+    {
+      "version": "3.14.1",
+      "date": "2026-04-23",
+      "isPreRelease": false,
+      "summary": "トレイでの用量可視化、Codex OAuth の複数の安定性修正、Skills インポート/インストールの信頼性向上、Hermes 設定ヘルススキャナーの削除"
+    },
+    {
+      "version": "3.14.0",
+      "date": "2026-04-21",
+      "isPreRelease": false,
+      "summary": "Hermes Agent が 6 番目の管理対象アプリに、Claude Opus 4.7 をプリセットマトリクス全体へ展開、Gemini Native API プロキシ、「Local Routing」への名称統一、アプリケーションレベルのウィンドウコントロール"
+    },
+    {
+      "version": "3.13.0",
+      "date": "2026-04-10",
+      "isPreRelease": false,
+      "summary": "軽量モード、クォータ・残高の可視化、プロバイダーモデル自動取得、Codex OAuth リバースプロキシ、トレイのアプリ別サブメニュー"
+    },
+    {
+      "version": "3.12.3",
+      "date": "2026-03-24",
+      "isPreRelease": false,
+      "summary": "GitHub Copilot リバースプロキシ、macOS コード署名と公証、Reasoning Effort マッピング、Tool Search 環境変数トグル、Skill バックアップ/リストア、OpenCode SQLite バックエンド"
+    },
+    {
+      "version": "3.12.2",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "プロキシテイクオーバー中の共通設定保護、Snippet ライフサイクルの安定化、Codex TOML セクション対応編集"
+    },
+    {
+      "version": "3.12.1",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "安定性修正、StepFun プリセット、OpenClaw authHeader 対応、新スポンサーパートナー"
+    },
+    {
+      "version": "3.12.0",
+      "date": "2026-03-09",
+      "isPreRelease": false,
+      "summary": "Stream Check が復活し、OpenAI Responses API に対応、OpenClaw と WebDAV も大幅強化"
+    },
+    {
+      "version": "3.11.1",
+      "date": "2026-02-28",
+      "isPreRelease": false,
+      "summary": "部分キーフィールドマージの撤回、共通設定スニペットの復元とバグ修正"
+    },
+    {
+      "version": "3.11.0",
+      "date": "2026-02-26",
+      "isPreRelease": false,
+      "summary": "OpenClaw サポート、セッションマネージャー、バックアップ管理と 50 以上の改善"
+    },
+    {
+      "version": "3.10.0",
+      "date": "2026-01-21",
+      "isPreRelease": false,
+      "summary": "OpenCode サポート、グローバルプロキシ、Claude Rectifier とマルチアプリ体験の強化"
+    },
+    {
+      "version": "3.9.0",
+      "date": "2026-01-07",
+      "isPreRelease": false,
+      "summary": "ローカル API プロキシ、自動フェイルオーバー、Universal Provider、多アプリ対応の強化"
+    },
+    {
+      "version": "3.8.0",
+      "date": "2025-11-28",
+      "isPreRelease": false,
+      "summary": "永続化アーキテクチャを刷新し、クラウド同期の土台を構築"
+    }
+  ]
+}

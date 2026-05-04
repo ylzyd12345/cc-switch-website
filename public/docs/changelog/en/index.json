@@ -1,0 +1,100 @@
+{
+  "versions": [
+    {
+      "version": "3.14.1",
+      "date": "2026-04-23",
+      "isPreRelease": false,
+      "summary": "Tray usage visibility, Codex OAuth stability fixes, Skills import/install reliability, and removal of the Hermes config health scanner"
+    },
+    {
+      "version": "3.14.0",
+      "date": "2026-04-21",
+      "isPreRelease": false,
+      "summary": "Hermes Agent becomes the 6th managed app, Claude Opus 4.7 rolls out across the preset matrix, Gemini Native API proxy, \"Local Routing\" rename, and application-level window controls"
+    },
+    {
+      "version": "3.13.0",
+      "date": "2026-04-10",
+      "isPreRelease": false,
+      "summary": "Lightweight Mode, Quota & Balance Visibility, Provider Model Auto-Fetch, Codex OAuth Reverse Proxy, and Tray Per-App Submenus"
+    },
+    {
+      "version": "3.12.3",
+      "date": "2026-03-24",
+      "isPreRelease": false,
+      "summary": "GitHub Copilot Reverse Proxy, macOS Code Signing & Notarization, Reasoning Effort Mapping, OpenCode SQLite Backend"
+    },
+    {
+      "version": "3.12.2",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "Common Config Protection During Proxy Takeover, Snippet Lifecycle Stability, Section-Aware Codex TOML Editing"
+    },
+    {
+      "version": "3.12.1",
+      "date": "2026-03-12",
+      "isPreRelease": false,
+      "summary": "Stability Fixes, StepFun Presets, OpenClaw authHeader, and New Sponsor Partners"
+    },
+    {
+      "version": "3.12.0",
+      "date": "2026-03-09",
+      "isPreRelease": false,
+      "summary": "Stream Check Returns, OpenAI Responses API Arrives, and OpenClaw / WebDAV Get a Major Upgrade"
+    },
+    {
+      "version": "3.11.1",
+      "date": "2026-02-28",
+      "isPreRelease": false,
+      "summary": "Revert Partial Key-Field Merging, Restore Common Config Snippet & Bug Fixes"
+    },
+    {
+      "version": "3.11.0",
+      "date": "2026-02-26",
+      "isPreRelease": false,
+      "summary": "OpenClaw Support, Session Manager, Backup Management & 50+ Improvements"
+    },
+    {
+      "version": "3.10.0",
+      "date": "2026-01-21",
+      "isPreRelease": false,
+      "summary": "OpenCode Support, Global Proxy, Claude Rectifier & Multi-App Experience Enhancements"
+    },
+    {
+      "version": "3.9.0",
+      "date": "2026-01-07",
+      "isPreRelease": false,
+      "summary": "Local API Proxy, Auto Failover, Universal Provider, and a more complete multi-app workflow"
+    },
+    {
+      "version": "3.8.0",
+      "date": "2025-11-28",
+      "isPreRelease": false,
+      "summary": "Persistence Architecture Upgrade, Laying the Foundation for Cloud Sync"
+    },
+    {
+      "version": "3.7.1",
+      "date": "2025-11-22",
+      "isPreRelease": false,
+      "summary": "Stability Enhancements and User Experience Improvements"
+    },
+    {
+      "version": "3.7.0",
+      "date": "2025-11-19",
+      "isPreRelease": false,
+      "summary": "From Provider Switcher to All-in-One AI CLI Management Platform"
+    },
+    {
+      "version": "3.6.1",
+      "date": "1970-01-01",
+      "isPreRelease": false,
+      "summary": "Stability improvements and user experience optimization (based on v3.6.0)"
+    },
+    {
+      "version": "3.6.0",
+      "date": "2025-11-07",
+      "isPreRelease": false,
+      "summary": ""
+    }
+  ]
+}

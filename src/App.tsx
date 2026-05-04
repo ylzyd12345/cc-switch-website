@@ -38,9 +38,13 @@ const App = () => (
           <Route path="/en/docs" element={<DocsPage />} />
           <Route path="/ja/docs" element={<DocsPage />} />
           <Route path="/changelog" element={<ChangelogPage />} />
+          <Route path="/changelog/:version" element={<ChangelogPage />} />
           <Route path="/zh/changelog" element={<ChangelogPage />} />
+          <Route path="/zh/changelog/:version" element={<ChangelogPage />} />
           <Route path="/en/changelog" element={<ChangelogPage />} />
+          <Route path="/en/changelog/:version" element={<ChangelogPage />} />
           <Route path="/ja/changelog" element={<ChangelogPage />} />
+          <Route path="/ja/changelog/:version" element={<ChangelogPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
