@@ -213,7 +213,7 @@ export const translations = {
     // Testimonials Section
     testimonials: {
       title: '用户怎么说',
-      subtitle: '来自开发者社区的真实反馈',
+      subtitle: '来自开发者社区的反馈',
       items: [
         {
           content: 'CC Switch 彻底改变了我的 AI 开发工作流。多 Provider 故障转移功能让我再也不用担心 API 限流问题，成本追踪功能帮我节省了 30% 的开支。',
@@ -254,6 +254,11 @@ export const translations = {
           content: '界面设计简洁优雅，交互体验流畅。作为前端架构师，我对 UI/UX 要求很高，CC Switch 完全满足了我的期望。',
           author: 'Mashiro',
           role: '小农科技有限公司 前端架构师',
+        },
+        {
+          content: '平时做实验要在不同 Provider 间反复切换做对比，CC Switch 让这件事变得无比顺滑，配置预设还能在课题组内共享，效率直接拉满。',
+          author: '兰大首席格调',
+          role: '兰州大学 博士生',
         },
       ],
     },
@@ -681,7 +686,7 @@ export const translations = {
     // Testimonials Section
     testimonials: {
       title: 'What Users Say',
-      subtitle: 'Real feedback from the developer community',
+      subtitle: 'Feedback from the developer community',
       items: [
         {
           content: "CC Switch completely transformed my AI development workflow. The multi-provider failover means I never worry about API rate limits, and cost tracking saved me 30% on expenses.",
@@ -722,6 +727,11 @@ export const translations = {
           content: "Clean and elegant interface design with smooth interactions. As a frontend architect with high UI/UX standards, CC Switch completely met my expectations.",
           author: 'Mashiro',
           role: 'Frontend Architect at Xiaonong Tech',
+        },
+        {
+          content: "I constantly switch between providers to run comparison experiments, and CC Switch makes it incredibly smooth. Sharing config presets across our research group has been a huge productivity boost.",
+          author: '兰大首席格调',
+          role: 'PhD Student at Lanzhou University',
         },
       ],
     },
@@ -1149,7 +1159,7 @@ export const translations = {
     // Testimonials Section
     testimonials: {
       title: 'ユーザーの声',
-      subtitle: '開発者コミュニティからのリアルなフィードバック',
+      subtitle: '開発者コミュニティからのフィードバック',
       items: [
         {
           content: 'CC Switch は私の AI 開発ワークフローを完全に変えました。マルチプロバイダーフェイルオーバーで API レート制限の心配がなくなり、コスト追跡で 30% の経費削減ができました。',
@@ -1190,6 +1200,11 @@ export const translations = {
           content: 'シンプルでエレガントなインターフェースデザインと滑らかなインタラクション。UI/UX に高い基準を持つフロントエンドアーキテクトとして、CC Switch は私の期待を完全に満たしてくれました。',
           author: 'Mashiro',
           role: '小農科技 フロントエンドアーキテクト',
+        },
+        {
+          content: '研究で複数のプロバイダーを切り替えて比較実験を行いますが、CC Switch の切り替えは非常にスムーズで、設定プリセットを研究室で共有できるおかげで効率が大幅に向上しました。',
+          author: '兰大首席格调',
+          role: '蘭州大学 博士課程',
         },
       ],
     },

@@ -2,21 +2,31 @@ import { Quote } from 'lucide-react';
 import { useLanguage } from '@/i18n/useLanguage';
 import { SectionHeader } from './SectionHeader';
 
-const avatarStyles = [
-  { avatar: '愚', avatarBg: 'bg-blue-500' },
-  { avatar: '军', avatarBg: 'bg-purple-500' },
-  { avatar: '荀', avatarBg: 'bg-green-500' },
-  { avatar: '苟', avatarBg: 'bg-red-500' },
-  { avatar: '菌', avatarBg: 'bg-orange-500' },
-  { avatar: '白', avatarBg: 'bg-slate-500' },
-  { avatar: '念', avatarBg: 'bg-cyan-500' },
-  { avatar: 'M', avatarBg: 'bg-pink-500' },
+const avatarBgs = [
+  'bg-blue-500',
+  'bg-purple-500',
+  'bg-green-500',
+  'bg-red-500',
+  'bg-orange-500',
+  'bg-slate-500',
+  'bg-cyan-500',
+  'bg-pink-500',
 ];
 
-function TestimonialCard({ testimonial, style }: {
+function avatarBgForAuthor(author: string): string {
+  let hash = 0;
+  for (let i = 0; i < author.length; i++) {
+    hash = (hash * 31 + author.charCodeAt(i)) | 0;
+  }
+  return avatarBgs[Math.abs(hash) % avatarBgs.length];
+}
+
+function TestimonialCard({ testimonial }: {
   testimonial: { content: string; author: string; role: string };
-  style: { avatar: string; avatarBg: string };
 }) {
+  const avatarBg = avatarBgForAuthor(testimonial.author);
+  const avatarChar = Array.from(testimonial.author)[0] ?? '';
+
   return (
     <div className="flex h-[200px] w-full flex-shrink-0 flex-col rounded-2xl border border-border bg-card p-5 shadow-lg md:w-[360px]">
       {/* Quote Icon */}
@@ -31,8 +41,8 @@ function TestimonialCard({ testimonial, style }: {
 
       {/* Author - 靠近底部 */}
       <div className="flex items-center gap-3 mt-auto pt-3">
-        <div className={`w-9 h-9 rounded-full ${style.avatarBg} text-white flex items-center justify-center font-bold text-sm`}>
-          {style.avatar}
+        <div className={`w-9 h-9 rounded-full ${avatarBg} text-white flex items-center justify-center font-bold text-sm`}>
+          {avatarChar}
         </div>
         <div>
           <div className="font-semibold text-foreground text-sm">
@@ -70,7 +80,6 @@ function ScrollRow({ items, direction, offset = 0 }: {
           <TestimonialCard
             key={`a-${index}`}
             testimonial={testimonial}
-            style={avatarStyles[index % avatarStyles.length]}
           />
         ))}
       </div>
@@ -85,7 +94,6 @@ function ScrollRow({ items, direction, offset = 0 }: {
           <TestimonialCard
             key={`b-${index}`}
             testimonial={testimonial}
-            style={avatarStyles[index % avatarStyles.length]}
           />
         ))}
       </div>
@@ -115,7 +123,6 @@ export function TestimonialsSection() {
             <TestimonialCard
               key={`mobile-${index}`}
               testimonial={testimonial}
-              style={avatarStyles[index % avatarStyles.length]}
             />
           ))}
         </div>
