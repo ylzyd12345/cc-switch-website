@@ -103,9 +103,9 @@ export const sponsors: Sponsor[] = [
       ja: 'PackyCode は Claude Code、Codex、Gemini などに対応する安定・高効率な API 中継サービスです。登録時にクーポンコードを使うと初回チャージが割引になります。',
     },
     perk: {
-      zh: '首次充值 9 折，需在支付时填写优惠码',
-      en: '10% off first recharge — apply coupon at checkout',
-      ja: '初回チャージ 10% オフ（お支払い時にクーポンコードを入力）',
+      zh: '首次充值 9 折，需在支付时填写优惠码"cc-switch"',
+      en: '10% off first recharge — apply coupon "cc-switch" at checkout',
+      ja: '初回チャージ 10% オフ（お支払い時にクーポンコード「cc-switch」を入力）',
     },
     couponCode: 'cc-switch',
   },
