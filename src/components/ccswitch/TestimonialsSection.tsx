@@ -68,7 +68,7 @@ function ScrollRow({ items, direction, offset = 0 }: {
 
   return (
     <div
-      className="flex w-full max-w-full overflow-hidden [contain:paint]"
+      className="flex w-full max-w-full overflow-x-clip py-3"
       style={{ paddingLeft: offset }}
     >
       {/* 第一组 */}
