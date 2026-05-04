@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
 import { useLanguage } from '@/i18n/useLanguage';
+import { SectionHeader } from './SectionHeader';
 
 const avatarStyles = [
   { avatar: '愚', avatarBg: 'bg-blue-500' },
@@ -99,23 +99,13 @@ export function TestimonialsSection() {
   const items = t.testimonials.items;
 
   return (
-    <section className="overflow-hidden overflow-x-clip bg-muted/30 py-16 sm:py-20 md:py-32">
+    <section className="section-y overflow-hidden overflow-x-clip bg-muted/30">
       <div className="container">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-16"
-        >
-          <h2 className="text-display-md text-foreground mb-4 md:mb-6">
-            {t.testimonials.title}
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
-            {t.testimonials.subtitle}
-          </p>
-        </motion.div>
+        <SectionHeader
+          title={t.testimonials.title}
+          subtitle={t.testimonials.subtitle}
+          className="mb-10 md:mb-16"
+        />
       </div>
 
       {/* Mobile Cards */}

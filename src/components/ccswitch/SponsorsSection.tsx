@@ -7,6 +7,7 @@ import { featuredSponsors } from '@/content/sponsors';
 import { fadeInUpStaggerContainer } from '@/lib/motion';
 import { SPONSOR_CONTACT_URL } from '@/lib/seo';
 import { SponsorCard } from '@/components/sponsors/SponsorCard';
+import { SectionHeader } from './SectionHeader';
 
 export function SponsorsSection() {
     const { language, t } = useLanguage();
@@ -15,22 +16,14 @@ export function SponsorsSection() {
     if (featuredSponsors.length === 0) return null;
 
     return (
-        <section className="bg-muted/30 py-16 sm:py-20 md:py-32">
+        <section className="section-y bg-muted/30">
             <div className="container">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-100px' }}
-                    transition={{ duration: 0.6 }}
-                    className="text-center mb-12 md:mb-16"
-                >
-                    <h2 className="text-display-md text-foreground mb-4">
-                        {copy.title}
-                    </h2>
-                    <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
-                        {copy.subtitle}
-                    </p>
-                </motion.div>
+                <SectionHeader
+                    title={copy.title}
+                    subtitle={copy.subtitle}
+                    titleClassName="mb-4"
+                    subtitleClassName="mx-auto max-w-2xl text-base sm:text-lg"
+                />
 
                 <motion.div
                     variants={fadeInUpStaggerContainer}

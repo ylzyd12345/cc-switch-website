@@ -10,7 +10,7 @@ export function TechSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="py-20 md:py-32 bg-background">
+    <section className="section-y bg-background">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left: Code Example */}

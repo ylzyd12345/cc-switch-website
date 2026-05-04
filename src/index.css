@@ -209,6 +209,11 @@
     @apply text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight;
   }
   
+  /* Standard vertical padding for full-width homepage sections */
+  .section-y {
+    @apply py-16 sm:py-20 md:py-32;
+  }
+
   /* Section Card - Theme Compatible */
   .section-card {
     @apply bg-card border border-border rounded-2xl shadow-lg;

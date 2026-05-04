@@ -7,7 +7,7 @@ export function CTASection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 md:py-32">
+    <section className="section-y relative overflow-hidden">
       {/* Gradient Background */}
       <div className="absolute inset-0 hero-gradient" />
       

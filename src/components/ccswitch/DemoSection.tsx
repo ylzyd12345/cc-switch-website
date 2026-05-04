@@ -6,6 +6,7 @@ import { useLanguage } from '@/i18n/useLanguage';
 import { ProviderContent } from './demo/ProviderDemo';
 import { ProxyContent } from './demo/ProxyDemo';
 import { MacOsWindowBar } from './MacOsWindowBar';
+import { SectionHeader } from './SectionHeader';
 
 type DemoTabId = 'provider' | 'proxy' | 'stats';
 
@@ -35,22 +36,13 @@ export function DemoSection() {
   ] satisfies Array<{ id: DemoTabId; label: string; icon: typeof Layers }>;
 
   return (
-    <section className="py-16 sm:py-20 md:py-32 bg-muted/30 overflow-hidden">
+    <section className="section-y bg-muted/30 overflow-hidden">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-10 md:mb-16"
-        >
-          <h2 className="text-display-md text-foreground mb-4 md:mb-6">
-            {t.demo.title}
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
-            {t.demo.subtitle}
-          </p>
-        </motion.div>
+        <SectionHeader
+          title={t.demo.title}
+          subtitle={t.demo.subtitle}
+          className="mb-8 sm:mb-10 md:mb-16"
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
