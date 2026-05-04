@@ -101,8 +101,8 @@ export default function DocsPage() {
       />
       
       <div className="pt-20 md:pt-24">
-        <div className="container max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-4">
-          <div className="flex gap-8 py-6">
+        <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-4">
+          <div className="flex gap-8 py-4 sm:py-6">
             {/* Sidebar - Desktop */}
             <div className="hidden lg:block">
               {/* Search Button */}
@@ -123,13 +123,13 @@ export default function DocsPage() {
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0">
+            <main className="min-w-0 flex-1">
               <motion.article
                 key={`${language}-${activeSection}-${activeItem}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="max-w-3xl"
+                className="max-w-none xl:max-w-3xl"
               >
                 {/* Content */}
                 <div className="pb-8">
@@ -143,8 +143,8 @@ export default function DocsPage() {
                 </div>
 
                 {/* Page Footer */}
-                <div className="border-t border-border pt-6 mt-8">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-8">
+                <div className="mt-8 border-t border-border pt-6">
+                  <div className="mb-8 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                       {editPath && (
                         <a
@@ -165,17 +165,17 @@ export default function DocsPage() {
                   </div>
 
                   {/* Prev/Next Navigation */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                     {prevNav ? (
                       <button
                         onClick={() => handleNavigate(prevNav.sectionId, prevNav.itemId)}
-                        className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-left group"
+                        className="group flex flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/50"
                       >
                         <span className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                           {t.docs.pagination.previous}
                         </span>
-                        <span className="font-medium text-foreground">{prevNav.title}</span>
+                        <span className="font-medium text-foreground break-words">{prevNav.title}</span>
                       </button>
                     ) : (
                       <div />
@@ -184,13 +184,13 @@ export default function DocsPage() {
                     {nextNav ? (
                       <button
                         onClick={() => handleNavigate(nextNav.sectionId, nextNav.itemId)}
-                        className="flex flex-col items-end p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-right group"
+                        className="group flex flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/50 sm:items-end sm:text-right"
                       >
                         <span className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                           {t.docs.pagination.next}
                           <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </span>
-                        <span className="font-medium text-foreground">{nextNav.title}</span>
+                        <span className="font-medium text-foreground break-words">{nextNav.title}</span>
                       </button>
                     ) : (
                       <div />

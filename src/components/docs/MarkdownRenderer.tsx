@@ -111,8 +111,8 @@ function CodeBlock({ className, children }: { className?: string; children: stri
   };
 
   return (
-    <div className="relative group">
-      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="group relative max-w-full">
+      <div className="absolute right-2 top-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
         <button
           onClick={handleCopy}
           className="p-2 rounded-lg bg-muted/80 hover:bg-muted border border-border/50 transition-colors"
@@ -128,7 +128,7 @@ function CodeBlock({ className, children }: { className?: string; children: stri
       <div className="absolute left-3 top-2 text-xs text-muted-foreground/60 uppercase tracking-wider">
         {language}
       </div>
-      <pre className="bg-card border border-border rounded-xl pt-10 pb-4 px-4 overflow-x-auto text-sm">
+      <pre className="max-w-full overflow-x-auto rounded-xl border border-border bg-card px-4 pb-4 pt-10 text-sm">
         <code ref={codeRef} className={`language-${language}`}>
           {children}
         </code>
@@ -149,14 +149,14 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
   };
 
   return (
-    <div className={cn('prose-docs', className)}>
+    <div className={cn('prose-docs max-w-full [overflow-wrap:anywhere]', className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => {
             const id = generateId(String(children));
             return (
-              <h1 id={id} className="text-3xl md:text-4xl font-bold text-foreground mb-6 mt-8 first:mt-0 border-b border-border pb-4 scroll-mt-24">
+              <h1 id={id} className="mb-6 mt-8 scroll-mt-24 border-b border-border pb-4 text-3xl font-bold text-foreground first:mt-0 md:text-4xl">
                 {children}
               </h1>
             );
@@ -164,7 +164,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           h2: ({ children }) => {
             const id = generateId(String(children));
             return (
-              <h2 id={id} className="text-2xl md:text-3xl font-semibold text-foreground mb-4 mt-10 scroll-mt-24">
+              <h2 id={id} className="mb-4 mt-10 scroll-mt-24 text-2xl font-semibold text-foreground md:text-3xl">
                 {children}
               </h2>
             );
@@ -172,7 +172,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           h3: ({ children }) => {
             const id = generateId(String(children));
             return (
-              <h3 id={id} className="text-xl md:text-2xl font-semibold text-foreground mb-3 mt-8 scroll-mt-24">
+              <h3 id={id} className="mb-3 mt-8 scroll-mt-24 text-xl font-semibold text-foreground md:text-2xl">
                 {children}
               </h3>
             );
@@ -186,7 +186,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             );
           },
           p: ({ children }) => (
-            <p className="text-muted-foreground leading-7 mb-4">
+            <p className="mb-4 leading-7 text-muted-foreground">
               {children}
             </p>
           ),
@@ -201,12 +201,12 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             </a>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-outside ml-6 mb-4 space-y-2 text-muted-foreground">
+            <ul className="mb-4 ml-5 list-outside list-disc space-y-2 text-muted-foreground sm:ml-6">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-outside ml-6 mb-4 space-y-2 text-muted-foreground">
+            <ol className="mb-4 ml-5 list-outside list-decimal space-y-2 text-muted-foreground sm:ml-6">
               {children}
             </ol>
           ),
@@ -239,8 +239,8 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             return <>{children}</>;
           },
           table: ({ children }) => (
-            <div className="overflow-x-auto mb-6 rounded-xl border border-border">
-              <table className="w-full border-collapse">
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-max border-collapse">
                 {children}
               </table>
             </div>
@@ -251,12 +251,12 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             </thead>
           ),
           th: ({ children }) => (
-            <th className="border-b border-border px-4 py-3 text-left font-semibold text-foreground">
+            <th className="border-b border-border px-3 py-3 text-left font-semibold text-foreground sm:px-4">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border-b border-border px-4 py-3 text-muted-foreground">
+            <td className="border-b border-border px-3 py-3 text-muted-foreground sm:px-4">
               {children}
             </td>
           ),
@@ -267,7 +267,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <img
               src={src}
               alt={alt}
-              className="rounded-xl border border-border shadow-lg my-6 max-w-full"
+              className="my-6 max-w-full rounded-xl border border-border shadow-lg"
             />
           ),
         }}

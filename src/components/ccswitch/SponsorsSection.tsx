@@ -54,7 +54,7 @@ export function SponsorsSection() {
         : 'CC Switch is supported by amazing partners who make it possible to maintain this project.';
 
     return (
-        <section className="py-20 md:py-32 bg-muted/30">
+        <section className="bg-muted/30 py-16 sm:py-20 md:py-32">
             <div className="container">
                 {/* Section Header */}
                 <motion.div
@@ -67,7 +67,7 @@ export function SponsorsSection() {
                     <h2 className="text-display-md text-foreground mb-4">
                         {title}
                     </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
                         {subtitle}
                     </p>
                 </motion.div>
@@ -87,7 +87,7 @@ export function SponsorsSection() {
                             target="_blank"
                             rel="noopener noreferrer"
                             variants={itemVariants}
-                            className="group relative flex items-center gap-4 p-6 md:p-8 rounded-2xl 
+                            className="group relative flex items-center gap-4 rounded-2xl p-5 sm:p-6 md:p-8 
                                 bg-card border border-border 
                                 hover:border-emerald-500/50 hover:shadow-xl
                                 transition-all duration-300"
@@ -109,9 +109,9 @@ export function SponsorsSection() {
                                 <p className="text-sm md:text-base text-muted-foreground mt-1">
                                     {language === 'zh' ? sponsor.description : sponsor.descriptionEn}
                                 </p>
-                                <span className="inline-flex items-center gap-1 text-emerald-500 text-sm mt-2 group-hover:underline">
-                                    {sponsor.url.replace('https://', '').replace('www.', '')}
-                                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span className="mt-2 flex min-w-0 max-w-full items-center gap-1 text-sm text-emerald-500 group-hover:underline">
+                                    <span className="min-w-0 flex-1 truncate">{sponsor.url.replace('https://', '').replace('www.', '')}</span>
+                                    <svg className="w-4 h-4 shrink-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                     </svg>
                                 </span>

@@ -254,13 +254,13 @@ export function StatsContent() {
   ];
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-xl font-semibold text-foreground">{t.demo.stats.title}</h3>
+    <div className="p-3 sm:p-4 md:p-6">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-foreground sm:text-xl">{t.demo.stats.title}</h3>
           <p className="text-sm text-muted-foreground">{t.demo.stats.subtitle}</p>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-1">
           {(['hours24', 'days1', 'days7', 'days14', 'days30'] as const).map((nextPeriod) => (
             <motion.button
               key={nextPeriod}
@@ -269,7 +269,7 @@ export function StatsContent() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={cn(
-                'relative px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                'relative shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:px-4',
                 period === nextPeriod ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -286,19 +286,19 @@ export function StatsContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
         {metricCards.map((stat, index) => (
           <motion.div
             key={stat.label}
-            className="p-4 rounded-xl border border-border bg-card"
+            className="rounded-xl border border-border bg-card p-4"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.03 }}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-sm text-muted-foreground">{stat.label}</span>
-              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', stat.bgColor)}>
-                <stat.icon className={cn('w-4 h-4', stat.color)} />
+              <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', stat.bgColor)}>
+                <stat.icon className={cn('h-4 w-4', stat.color)} />
               </div>
             </div>
             <motion.div
@@ -306,12 +306,12 @@ export function StatsContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="text-2xl font-bold text-foreground mb-1"
+              className="mb-1 text-2xl font-bold text-foreground"
             >
               {stat.value}
             </motion.div>
             {stat.subStats && (
-              <div className="flex gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 {stat.subStats.map((subStat) => (
                   <span key={subStat.label}>
                     {subStat.label} <span className="text-foreground">{subStat.value}</span>
@@ -323,24 +323,24 @@ export function StatsContent() {
         ))}
       </div>
 
-      <div className="p-6 rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between mb-6">
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
           <h4 className="font-semibold text-foreground">{t.demo.stats.trend}</h4>
           <motion.span key={period} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-muted-foreground">
             {periodLabels[period]}
           </motion.span>
         </div>
 
-        <div className="h-52">
+        <div className="h-48 sm:h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 4 }}>
               <CartesianGrid vertical={false} stroke="currentColor" strokeOpacity={0.08} />
               <XAxis
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
                 interval={periodDataSet[period] === 'days30' ? 2 : 1}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
               />
               <Tooltip content={(props) => <StatsTooltip {...props} lines={lines} />} cursor={{ strokeDasharray: '4 4', opacity: 0.3 }} />
               {lines.map((line) => (
@@ -359,7 +359,7 @@ export function StatsContent() {
           </ResponsiveContainer>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-sm">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs sm:mt-6 sm:gap-4 sm:text-sm">
           {lines.map((line) => (
             <span key={line.key} className="flex items-center gap-2">
               <span

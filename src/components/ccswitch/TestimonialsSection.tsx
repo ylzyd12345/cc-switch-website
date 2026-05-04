@@ -18,7 +18,7 @@ function TestimonialCard({ testimonial, style }: {
   style: { avatar: string; avatarBg: string };
 }) {
   return (
-    <div className="flex-shrink-0 w-[320px] md:w-[360px] h-[200px] p-5 rounded-2xl bg-card border border-border shadow-lg flex flex-col">
+    <div className="flex h-[200px] w-full flex-shrink-0 flex-col rounded-2xl border border-border bg-card p-5 shadow-lg md:w-[360px]">
       {/* Quote Icon */}
       <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-3">
         <Quote className="w-4 h-4 text-primary" />
@@ -58,7 +58,7 @@ function ScrollRow({ items, direction, offset = 0 }: {
 
   return (
     <div
-      className="flex overflow-hidden"
+      className="flex w-full max-w-full overflow-hidden [contain:paint]"
       style={{ paddingLeft: offset }}
     >
       {/* 第一组 */}
@@ -99,7 +99,7 @@ export function TestimonialsSection() {
   const items = t.testimonials.items;
 
   return (
-    <section className="py-20 md:py-32 bg-muted/30 overflow-hidden">
+    <section className="overflow-hidden overflow-x-clip bg-muted/30 py-16 sm:py-20 md:py-32">
       <div className="container">
         {/* Section Header */}
         <motion.div
@@ -107,19 +107,32 @@ export function TestimonialsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-10 md:mb-16"
         >
           <h2 className="text-display-md text-foreground mb-4 md:mb-6">
             {t.testimonials.title}
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
             {t.testimonials.subtitle}
           </p>
         </motion.div>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="px-6 md:hidden">
+        <div className="grid gap-4">
+          {items.slice(0, 3).map((testimonial, index) => (
+            <TestimonialCard
+              key={`mobile-${index}`}
+              testimonial={testimonial}
+              style={avatarStyles[index % avatarStyles.length]}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Scrolling Rows Container */}
-      <div className="space-y-6">
+      <div className="hidden space-y-6 md:block">
         {/* Top Row - 向左滚动 */}
         <ScrollRow items={items} direction="left" />
 

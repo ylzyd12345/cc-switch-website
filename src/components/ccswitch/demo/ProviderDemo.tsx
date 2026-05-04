@@ -109,21 +109,21 @@ export function ProviderContent() {
   };
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
-        <div className="flex items-center gap-3">
+    <div className="p-3 sm:p-4 md:p-6">
+      <div className="mb-4 flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           <span className="text-base font-semibold text-emerald-500">CC Switch</span>
-          <Settings className="w-4 h-4 text-muted-foreground" />
-          <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-muted-foreground" />
+          <div className="flex min-w-0 items-center gap-2">
             <Wifi
               className={cn(
-                'w-4 h-4 transition-colors',
+                'h-4 w-4 shrink-0 transition-colors',
                 proxyEnabled ? 'text-emerald-500 animate-pulse' : 'text-muted-foreground',
               )}
             />
             <span
               className={cn(
-                'text-sm transition-colors',
+                'truncate text-sm transition-colors',
                 proxyEnabled ? 'text-emerald-500' : 'text-muted-foreground',
               )}
             >
@@ -133,7 +133,7 @@ export function ProviderContent() {
               type="button"
               onClick={() => setProxyEnabled((enabled) => !enabled)}
               className={cn(
-                'w-10 h-[22px] rounded-full flex items-center px-0.5 transition-colors',
+                'flex h-[22px] w-10 shrink-0 items-center rounded-full px-0.5 transition-colors',
                 proxyEnabled ? 'bg-emerald-500' : 'bg-muted-foreground/30',
               )}
               aria-pressed={proxyEnabled}
@@ -141,14 +141,14 @@ export function ProviderContent() {
               <motion.div
                 animate={{ x: proxyEnabled ? 18 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="w-[18px] h-[18px] bg-white rounded-full shadow-sm"
+                className="h-[18px] w-[18px] rounded-full bg-white shadow-sm"
               />
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:gap-3">
 
-          <div className="inline-flex items-center bg-muted/80 rounded-xl p-1 gap-1">
+          <div className="inline-flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-xl bg-muted/80 p-1 sm:flex-none">
             {cliTabs.map((tab) => (
               <motion.button
                 key={tab.id}
@@ -158,7 +158,7 @@ export function ProviderContent() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  'relative inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-all duration-200',
+                  'relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-medium transition-all duration-200',
                   activeTab === tab.id
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-background/50',
@@ -176,8 +176,8 @@ export function ProviderContent() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-3 bg-muted/80 rounded-lg px-3.5 py-2">
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden items-center gap-3 rounded-lg bg-muted/80 px-3.5 py-2 sm:flex">
               {toolbarActions.map(({ key, icon: Icon }) => (
                 <motion.div
                   key={`${activeTab}-${key}`}
@@ -193,9 +193,9 @@ export function ProviderContent() {
               type="button"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="w-6 h-6 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 transition-colors hover:bg-orange-600 sm:h-6 sm:w-6"
             >
-              <Plus className="w-3.5 h-3.5 text-white" />
+              <Plus className="h-4 w-4 text-white sm:h-3.5 sm:w-3.5" />
             </motion.button>
           </div>
         </div>

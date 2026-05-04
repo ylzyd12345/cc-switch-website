@@ -34,19 +34,19 @@ export function DemoSection() {
   ] satisfies Array<{ id: DemoTabId; label: string; icon: typeof Layers }>;
 
   return (
-    <section className="py-20 md:py-32 bg-muted/30">
+    <section className="py-16 sm:py-20 md:py-32 bg-muted/30 overflow-hidden">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-16"
+          className="text-center mb-8 sm:mb-10 md:mb-16"
         >
           <h2 className="text-display-md text-foreground mb-4 md:mb-6">
             {t.demo.title}
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
             {t.demo.subtitle}
           </p>
         </motion.div>
@@ -58,14 +58,14 @@ export function DemoSection() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="flex justify-center mb-6 md:mb-8"
         >
-          <div className="inline-flex gap-1 md:gap-2 p-1.5 md:p-2 rounded-xl bg-card border border-border">
+          <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1.5 md:gap-2 md:p-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-all text-sm md:text-base',
+                  'flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all md:px-6 md:py-3 md:text-base',
                   activeTab === tab.id
                     ? 'bg-primary text-primary-foreground shadow-md'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -85,14 +85,14 @@ export function DemoSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="relative mx-auto w-full max-w-[1000px]"
         >
-          <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-purple/20 rounded-3xl blur-3xl opacity-50" />
+          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-primary/20 to-purple/20 rounded-3xl blur-3xl opacity-50" />
 
-          <div className="relative flex h-[650px] flex-col bg-card rounded-2xl shadow-2xl border border-border overflow-hidden">
-            <div className="flex h-11 shrink-0 items-center gap-2 px-4 bg-muted/50 border-b border-border">
+          <div className="relative flex h-[590px] sm:h-[620px] md:h-[650px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl sm:rounded-2xl">
+            <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-muted/50 px-3 sm:h-11 sm:px-4">
               <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <div className="h-2.5 w-2.5 rounded-full bg-red-500 sm:h-3 sm:w-3" />
+                <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 sm:h-3 sm:w-3" />
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500 sm:h-3 sm:w-3" />
               </div>
             </div>
 

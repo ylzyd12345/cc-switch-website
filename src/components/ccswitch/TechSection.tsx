@@ -14,10 +14,11 @@ export function TechSection() {
         <div className="grid lg:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left: Code Example */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
+            className="min-w-0"
           >
             {/* Badge */}
             <div className="mb-6">
@@ -37,7 +38,7 @@ export function TechSection() {
             </p>
 
             {/* Code Block - Always dark background */}
-            <div className="rounded-xl bg-[#1a1a1a] overflow-hidden">
+            <div className="max-w-full overflow-hidden rounded-xl bg-[#1a1a1a]">
               <div className="flex items-center gap-2 px-4 py-3 bg-[#252525] border-b border-white/10">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
@@ -61,11 +62,11 @@ export function TechSection() {
 
           {/* Right: Feature List */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6 md:space-y-8"
+            className="min-w-0 space-y-6 md:space-y-8"
           >
             {t.tech.features.map((feature, index) => {
               const Icon = techIcons[index];

@@ -68,56 +68,56 @@ export function ProxyContent() {
   ];
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Server className="w-5 h-5 text-primary" />
+    <div className="p-3 sm:p-4 md:p-6">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Server className="h-5 w-5 text-primary" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="font-semibold text-foreground">{t.demo.proxy.localProxy}</h3>
             <p className="text-sm text-muted-foreground">{t.demo.proxy.proxyDescription}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-3">
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
           <span
             className={cn(
-              'px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5',
+              'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium',
               proxyRunning ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
             )}
           >
-            <Activity className="w-3 h-3" /> {proxyRunning ? t.demo.proxy.running : t.demo.proxy.stopped}
+            <Activity className="h-3 w-3" /> {proxyRunning ? t.demo.proxy.running : t.demo.proxy.stopped}
           </span>
           <Switch checked={proxyRunning} onCheckedChange={setProxyRunning} className="data-[state=checked]:bg-primary" />
         </div>
       </div>
 
-      <div className="p-5 rounded-xl border border-border bg-card mb-6">
+      <div className="mb-5 rounded-xl border border-border bg-card p-4 sm:mb-6 sm:p-5">
         <div className="text-sm text-muted-foreground mb-2">{t.demo.proxy.serviceAddress}</div>
-        <div className="flex items-center justify-between">
-          <code className="text-lg font-mono text-foreground">http://127.0.0.1:15721</code>
-          <button type="button" className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <code className="break-all font-mono text-sm text-foreground sm:text-lg">http://127.0.0.1:15721</code>
+          <button type="button" className="shrink-0 rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-muted">
             {t.demo.proxy.copy}
           </button>
         </div>
         <p className="text-sm text-muted-foreground mt-2">{t.demo.proxy.addressNote}</p>
       </div>
 
-      <div className="mb-6 pb-4 border-b border-border">
+      <div className="mb-5 border-b border-border pb-4 sm:mb-6">
         <div className="text-sm text-muted-foreground mb-1">{t.provider.inUse}</div>
-        <p className={proxyRunning ? 'text-emerald-500' : 'text-amber-500'}>
+        <p className={cn('break-words text-sm sm:text-base', proxyRunning ? 'text-emerald-500' : 'text-amber-500')}>
           {proxyRunning
             ? `${t.demo.proxy.currentProvider}：PackyCode (Claude Opus 4.7)`
             : `${t.demo.proxy.currentProvider}：${t.demo.proxy.waitingRequest}`}
         </p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6">
         <div className="text-sm text-muted-foreground mb-3">{t.demo.proxy.proxyEnable}</div>
-        <div className="flex gap-4">
+        <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
           {proxyToggles.map((item) => (
-            <div key={item.name} className="flex-1 flex items-center justify-between p-3 rounded-xl border border-border bg-card">
+            <div key={item.name} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
               <span className="flex items-center gap-2 font-medium text-foreground">
                 {item.icon}
                 {item.name}
@@ -128,17 +128,17 @@ export function ProxyContent() {
         </div>
       </div>
 
-      <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 mb-6 flex items-center justify-between">
-        <div>
+      <div className="mb-5 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <div className="font-medium text-foreground">{t.demo.proxy.enableLogging}</div>
           <div className="text-sm text-muted-foreground">{t.demo.proxy.loggingNote}</div>
         </div>
         <Switch checked={logEnabled} onCheckedChange={setLogEnabled} className="data-[state=checked]:bg-primary" />
       </div>
 
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <ListOrdered className="w-4 h-4" />
+          <ListOrdered className="h-4 w-4" />
           {t.demo.proxy.failoverQueue}
         </div>
 
@@ -147,15 +147,15 @@ export function ProxyContent() {
             <div className="text-sm text-muted-foreground mb-2 pl-2 border-l-2 border-border">{category}</div>
             <div className="space-y-2">
               {items.map((item) => (
-                <div key={item.name} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
+                <div key={item.name} className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
                     {item.rank}
                   </span>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <span className="font-medium text-foreground">{item.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{item.subtitle}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{item.subtitle}</span>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm flex items-center gap-1">
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     {item.status}
                   </span>
@@ -166,20 +166,20 @@ export function ProxyContent() {
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {stats.map((stat) => (
           <div
             key={stat.label}
             className={cn(
-              'p-4 rounded-xl border',
+              'rounded-xl border p-3 sm:p-4',
               stat.highlight ? 'border-primary/30 bg-primary/5' : 'border-border bg-card',
             )}
           >
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <stat.icon className="w-4 h-4" />
+            <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+              <stat.icon className="h-4 w-4 shrink-0" />
               {stat.label}
             </div>
-            <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+            <div className="text-xl font-bold text-foreground sm:text-2xl">{stat.value}</div>
           </div>
         ))}
       </div>

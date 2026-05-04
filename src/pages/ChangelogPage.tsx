@@ -96,7 +96,7 @@ export default function ChangelogPage() {
         
         <main className="pt-20 md:pt-24">
           {/* Content */}
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-8 py-8">
+          <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -141,7 +141,7 @@ export default function ChangelogPage() {
                 {/* Main Content */}
                 <div className="flex-1 min-w-0">
                   {/* Version Cards */}
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     {versions.map((entry, index) => (
                       <motion.div
                         key={entry.version}
@@ -150,7 +150,7 @@ export default function ChangelogPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
                         className={cn(
-                          'border border-border rounded-xl overflow-hidden transition-all duration-300',
+                          'overflow-hidden rounded-xl border border-border transition-all duration-300',
                           activeVersion === entry.version
                             ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/5'
                             : 'hover:border-primary/30'
@@ -158,10 +158,10 @@ export default function ChangelogPage() {
                       >
                         {/* Version Header */}
                         <div className={cn(
-                          'px-6 py-4 border-b border-border flex items-center justify-between',
+                          'flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6',
                           entry.isPreRelease ? 'bg-amber-500/5' : 'bg-muted/50'
                         )}>
-                          <div className="flex items-center gap-3">
+                          <div className="flex min-w-0 flex-wrap items-center gap-3">
                             <span className={cn(
                               'text-xl font-bold',
                               entry.isPreRelease ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
@@ -175,13 +175,13 @@ export default function ChangelogPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="h-4 w-4 shrink-0" />
                             <span>{entry.date}</span>
                           </div>
                         </div>
 
                         {/* Version Content */}
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                           <MarkdownRenderer 
                             content={stripChangelogVersionHeading(entry.content)}
                             className="changelog-content"
@@ -211,7 +211,7 @@ export default function ChangelogPage() {
         {/* Mobile Navigation Button */}
         <button
           onClick={() => setIsMobileNavOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+          className="fixed bottom-6 right-6 z-40 rounded-full bg-primary p-4 text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 lg:hidden"
           aria-label={t.changelog.openVersions}
         >
           <Menu className="w-6 h-6" />

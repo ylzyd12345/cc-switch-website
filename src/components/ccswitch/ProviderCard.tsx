@@ -56,9 +56,9 @@ export function ProviderCard({
       }}
       onClick={onSelect}
       className={cn(
-        "group relative flex items-center gap-3 bg-muted/30 rounded-xl border-2 cursor-pointer transition-colors hover:bg-muted/50",
+        "group relative flex items-center gap-2.5 bg-muted/30 rounded-xl border-2 cursor-pointer transition-colors hover:bg-muted/50 sm:gap-3",
         getBorderColor(),
-        compact ? "p-2.5" : "p-4",
+        compact ? "p-2.5" : "p-3 sm:p-4",
       )}
     >
       {/* Drag Handle - 6 dots */}
@@ -144,7 +144,7 @@ export function ProviderCard({
         </div>
 
         {/* Action Button & Icons - fixed in layout, opacity only on hover */}
-        <div className="flex shrink-0 items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100 group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+        <div className="hidden shrink-0 items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100 group-hover:pointer-events-auto group-focus-within:pointer-events-auto sm:flex">
           <div className={cn("flex justify-end", compact ? "w-[58px]" : "w-[78px]")}>
             {isActive ? (
               <div

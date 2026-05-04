@@ -7,7 +7,7 @@ export function CTASection() {
   const { t } = useLanguage();
 
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden">
+    <section className="relative overflow-hidden py-16 sm:py-20 md:py-32">
       {/* Gradient Background */}
       <div className="absolute inset-0 hero-gradient" />
       
@@ -18,12 +18,12 @@ export function CTASection() {
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/20 rounded-full blur-3xl"
+        className="absolute left-1/4 top-1/4 hidden h-64 w-64 rounded-full bg-white/20 blur-3xl sm:block"
       />
       <motion.div
         animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/20 rounded-full blur-3xl"
+        className="absolute bottom-1/4 right-1/4 hidden h-64 w-64 rounded-full bg-white/20 blur-3xl sm:block"
       />
 
       {/* Content */}
@@ -43,26 +43,26 @@ export function CTASection() {
           </h2>
 
           {/* Subtitle */}
-          <p className="text-lg md:text-xl text-white/80 mb-8 md:mb-10 max-w-2xl mx-auto">
+          <p className="mx-auto mb-8 max-w-2xl text-base text-white/80 sm:text-lg md:mb-10 md:text-xl">
             {t.cta.subtitle}
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer">
+          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="bg-white text-primary hover:bg-white/90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all px-8 py-6 text-lg font-semibold gap-2"
+                className="w-full gap-2 bg-white px-8 py-6 text-base font-semibold text-primary shadow-xl transition-all hover:scale-105 hover:bg-white/90 hover:shadow-2xl sm:w-auto sm:text-lg"
               >
                 <Download className="w-5 h-5" />
                 {t.cta.downloadBtn}
               </Button>
             </a>
-            <a href="https://github.com/farion1231/cc-switch" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/farion1231/cc-switch" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-transparent border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold gap-2"
+                className="w-full gap-2 border-2 border-white/30 bg-transparent px-8 py-6 text-base font-semibold text-white hover:bg-white/10 sm:w-auto sm:text-lg"
               >
                 {t.cta.githubBtn}
                 <ArrowRight className="w-5 h-5" />

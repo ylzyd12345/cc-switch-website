@@ -128,6 +128,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    overflow-x: clip;
   }
   
   code, pre {
@@ -182,19 +183,19 @@
   
   /* Text Display Sizes */
   .text-display-xl {
-    @apply text-6xl md:text-7xl font-bold tracking-tight leading-tight;
+    @apply text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight;
   }
   
   .text-display-lg {
-    @apply text-5xl md:text-6xl font-bold tracking-tight leading-tight;
+    @apply text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight;
   }
   
   .text-display-md {
-    @apply text-4xl md:text-5xl font-bold tracking-tight;
+    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight;
   }
   
   .text-display-sm {
-    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+    @apply text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight;
   }
   
   /* Section Card - Theme Compatible */

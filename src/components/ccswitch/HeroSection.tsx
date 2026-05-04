@@ -34,7 +34,7 @@ export function HeroSection() {
   const { language, t } = useLanguage();
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-20 pb-12 lg:pb-0">
+    <section className="relative flex items-start overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20 lg:min-h-screen lg:items-center lg:pt-20 lg:pb-0">
       {/* Simple Background */}
       <div className="absolute inset-0 bg-background" />
 
@@ -45,7 +45,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-grid opacity-20 dark:opacity-10" />
 
       {/* Content */}
-      <div className="relative z-10 container px-4 py-8 md:py-12 max-w-[1600px] mx-auto">
+      <div className="relative z-10 container px-4 py-4 sm:py-6 md:py-12 max-w-[1600px] mx-auto">
         <div className="grid lg:grid-cols-[5fr,7fr] gap-6 lg:gap-4 items-center">
           {/* Left: Text Content */}
           <div className="text-center lg:text-left lg:pl-4 xl:pl-8 lg:pr-4 mx-auto lg:mx-0">
@@ -54,29 +54,29 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-8"
+              className="mb-6 sm:mb-8"
             >
               {/* Version Badge */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-10">
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/20 text-foreground text-base font-medium">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8 sm:mb-10">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-foreground dark:bg-primary/20 sm:px-4 sm:py-2 sm:text-base">
                   🎉 v{version || '...'} {t.hero.versionBadge}
                 </span>
               </div>
 
               {/* Main Title with Logo */}
-              <div className="flex items-center justify-center lg:justify-start gap-5 mb-8">
-                <img src={ccSwitchLogo} alt="CC Switch" className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" />
-                <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground">CC Switch</h1>
+              <div className="flex items-center justify-center lg:justify-start gap-4 sm:gap-5 mb-6 sm:mb-8">
+                <img src={ccSwitchLogo} alt="CC Switch" className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" />
+                <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground">CC Switch</h1>
               </div>
 
               {/* Slogan */}
-              <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-muted-foreground font-medium">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-muted-foreground font-medium">
                 {t.hero.slogan}
               </p>
             </motion.div>
 
             {/* Spacer between upper and lower sections */}
-            <div className="h-32 md:h-44" />
+            <div className="h-14 sm:h-20 md:h-32 lg:h-44" />
 
             {/* Lower Section: CTA + Platforms */}
             <motion.div
@@ -85,21 +85,21 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start max-w-3xl mx-auto lg:mx-0">
-                <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start max-w-3xl mx-auto lg:mx-0">
+                <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="hero-gradient text-white hover:opacity-90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all px-8 md:px-10 py-6 md:py-7 text-lg md:text-xl font-semibold gap-2"
+                    className="w-full sm:w-auto hero-gradient text-white hover:opacity-90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all px-6 md:px-10 py-6 md:py-7 text-base sm:text-lg md:text-xl font-semibold gap-2"
                   >
                     <Download className="w-5 h-5" />
                     {t.hero.downloadBtn}
                   </Button>
                 </a>
-                <Link to={getLocalizedPath('/docs', language)}>
+                <Link to={getLocalizedPath('/docs', language)} className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-border bg-background/50 backdrop-blur-sm hover:bg-accent px-8 md:px-10 py-6 md:py-7 text-lg md:text-xl font-semibold gap-2"
+                    className="w-full sm:w-auto border-border bg-background/50 backdrop-blur-sm hover:bg-accent px-6 md:px-10 py-6 md:py-7 text-base sm:text-lg md:text-xl font-semibold gap-2"
                   >
                     {t.hero.docsBtn}
                     <ArrowRight className="w-5 h-5" />

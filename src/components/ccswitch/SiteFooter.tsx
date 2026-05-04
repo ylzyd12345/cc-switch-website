@@ -48,12 +48,12 @@ export function SiteFooter() {
   ];
 
   return (
-    <footer className="bg-card dark:bg-background border-t border-border py-16 md:py-20">
+    <footer className="border-t border-border bg-card py-12 dark:bg-background md:py-20">
       <div className="container">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 mb-12 md:mb-16">
+        <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 md:mb-16 md:grid-cols-5 md:gap-12">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img src={ccSwitchLogo} alt="CC Switch Logo" className="w-8 h-8" />
               <span className="font-bold text-lg text-foreground">CC Switch</span>
@@ -110,8 +110,8 @@ export function SiteFooter() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-muted-foreground text-sm">
+        <div className="flex flex-col items-start justify-between gap-3 border-t border-border pt-8 sm:items-center md:flex-row md:gap-4">
+          <p className="text-sm text-muted-foreground">
             {t.footer.copyright}
           </p>
           <p className="text-muted-foreground text-sm">
