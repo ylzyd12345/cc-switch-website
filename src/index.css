@@ -28,7 +28,7 @@
     
     /* Muted */
     --muted: 35 20% 87%;
-    --muted-foreground: 30 12% 45%;
+    --muted-foreground: 30 12% 38%;
     
     /* Accent */
     --accent: 35 22% 85%;
@@ -47,9 +47,12 @@
     --radius: 0.75rem;
     
     /* Functional Colors */
-    --success: 142 71% 45%;
-    --warning: 38 92% 50%;
-    --info: 15 65% 52%;
+    --success: 142 71% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+    --info: 220 70% 50%;
+    --info-foreground: 0 0% 100%;
     
     /* Accent color - terracotta */
     --accent-warm: 15 55% 48%;
@@ -107,7 +110,15 @@
     /* Accent warm */
     --accent-warm: 15 55% 48%;
     --accent-warm-foreground: 0 0% 100%;
-    
+
+    /* Functional Colors */
+    --success: 142 60% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 90% 58%;
+    --warning-foreground: 0 0% 10%;
+    --info: 220 75% 65%;
+    --info-foreground: 0 0% 100%;
+
     /* Sidebar Dark */
     --sidebar-background: 40 12% 10%;
     --sidebar-foreground: 35 20% 85%;
@@ -154,7 +165,7 @@
   
   /* Hero Gradient - Warm orange tones */
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(15 65% 52%) 0%, hsl(25 60% 48%) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-warm)) 100%);
   }
   
   /* Premium Gradient */
