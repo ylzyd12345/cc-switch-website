@@ -293,13 +293,26 @@ function VersionToc({ content }: { content: string }) {
 
   if (headings.length === 0) return null;
 
+  const handleClick = (id: string) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    const offset = 100;
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - offset;
+    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+  };
+
   return (
     <ul className="space-y-2 text-sm">
       {headings.map((heading) => (
         <li key={heading.id}>
-          <span className="text-muted-foreground hover:text-foreground transition-colors cursor-default">
+          <button
+            type="button"
+            onClick={() => handleClick(heading.id)}
+            className="text-left w-full py-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
             {heading.text}
-          </span>
+          </button>
         </li>
       ))}
     </ul>
