@@ -282,6 +282,11 @@ export const translations = {
           author: '兰大首席格调',
           role: '兰州大学 博士生',
         },
+        {
+          content: '试过不少 Claude Code 周边工具，CC Switch 是少数能长期留在 Dock 里的。Provider 一键切换、配置可视化、成本追踪做得都很扎实，连团队里的非技术同事都能上手。',
+          author: 'saladday',
+          role: '知名开发者',
+        },
       ],
     },
     // CTA Section
@@ -777,6 +782,11 @@ export const translations = {
           author: '兰大首席格调',
           role: 'PhD Student at Lanzhou University',
         },
+        {
+          content: "I've tried plenty of Claude Code companion tools, and CC Switch is one of the few I keep pinned to my Dock. One-click provider switching, visual config management, and cost tracking are all rock-solid - even the non-technical folks on my team picked it up instantly.",
+          author: 'saladday',
+          role: 'Renowned Developer',
+        },
       ],
     },
     // CTA Section
@@ -1271,6 +1281,11 @@ export const translations = {
           content: '研究で複数のプロバイダーを切り替えて比較実験を行いますが、CC Switch の切り替えは非常にスムーズで、設定プリセットを研究室で共有できるおかげで効率が大幅に向上しました。',
           author: '兰大首席格调',
           role: '蘭州大学 博士課程',
+        },
+        {
+          content: 'これまで多くの Claude Code 周辺ツールを試してきましたが、Dock に常駐させたいと思える数少ないツールが CC Switch です。プロバイダーのワンクリック切り替え、設定のビジュアル管理、コスト追跡、どれも完成度が高く、チームの非エンジニアでもすぐ使いこなせました。',
+          author: 'saladday',
+          role: '著名な開発者',
         },
       ],
     },
