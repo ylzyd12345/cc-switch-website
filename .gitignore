@@ -23,6 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .claude/
+CLAUDE.md
+AGENTS.md
 
 # Local env files
 .env
