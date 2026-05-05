@@ -72,7 +72,7 @@ export function SponsorBenefits() {
             href={SPONSOR_CONTACT_URL}
             className={cn(
               buttonVariants({ variant: 'hero', shape: 'pill' }),
-              'w-full px-6 py-3 text-sm font-medium shadow-sm hover:shadow-md sm:w-auto md:text-base',
+              'h-auto w-full border border-transparent px-6 py-3 text-sm font-medium shadow-sm hover:shadow-md sm:w-auto md:text-base',
             )}
           >
             <Heart className="h-4 w-4" />

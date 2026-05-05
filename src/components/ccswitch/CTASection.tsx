@@ -52,7 +52,7 @@ export function CTASection() {
             <a href="https://github.com/farion1231/cc-switch/releases" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="w-full gap-2 bg-white px-8 py-6 text-base font-semibold text-primary shadow-xl transition-all hover:scale-105 hover:bg-white/90 hover:shadow-2xl sm:w-auto sm:text-lg"
+                className="w-full gap-2 border-2 border-transparent bg-white px-8 py-6 text-base font-semibold text-primary shadow-xl transition-all hover:scale-105 hover:bg-white/90 hover:shadow-2xl sm:w-auto sm:text-lg"
               >
                 <Download className="w-5 h-5" />
                 {t.cta.downloadBtn}
