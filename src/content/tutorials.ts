@@ -45,6 +45,28 @@ export interface Tutorial {
 
 export const tutorials: Tutorial[] = [
   {
+    slug: 'codex-oauth-claude-code-local-routing',
+    title: {
+      zh: '用本地路由把 Codex 模型接到 Claude Code',
+      en: 'Use Local Routing to Run Codex Models in Claude Code',
+      ja: 'Local Routing で Codex モデルを Claude Code から使う',
+    },
+    summary: {
+      zh: '基于 GitHub issue #1997 的社区讨论，梳理 Codex OAuth 反向代理、本地路由、Claude 路由接管、全局终端启动和常见报错排查。',
+      en: 'A practical guide based on GitHub issue #1997 covering Codex OAuth reverse proxy, Local Routing, Claude routing takeover, launching from a normal terminal, and common pitfalls.',
+      ja: 'GitHub issue #1997 の議論をもとに、Codex OAuth リバースプロキシ、Local Routing、Claude ルーティング、通常のターミナル起動、よくある落とし穴を整理します。',
+    },
+    author: { name: 'CC Switch Team', url: 'https://github.com/farion1231/cc-switch/issues/1997' },
+    date: '2026-05-06',
+    category: 'practice',
+    source: 'official',
+    readMinutes: 11,
+    languages: ['zh'],
+    accent: 'amber',
+    emoji: '🔀',
+    featured: true,
+  },
+  {
     slug: 'khazix-agent-model-switching',
     title: {
       zh: '这个 51K 星标的开源神器，让任何 Agent 都能一键切换所有模型',
