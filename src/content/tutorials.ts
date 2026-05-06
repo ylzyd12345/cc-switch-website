@@ -133,6 +133,28 @@ export const tutorials: Tutorial[] = [
     featured: true,
   },
   {
+    slug: 'deepseek-v4-pro-claude-code-bilibili',
+    title: {
+      zh: '使用 CC Switch 将 DeepSeek-V4-pro 接入 Claude Code 教程',
+      en: 'Connect DeepSeek V4 Pro to Claude Code',
+      ja: 'DeepSeek V4 Pro を Claude Code に接続するチュートリアル',
+    },
+    summary: {
+      zh: '小陈同学c_z 的 B 站视频攻略，演示通过 CC Switch 将 DeepSeek V4 Pro 接入 Claude Code，覆盖安装、API Key 创建、供应商配置、模型切换、1M 上下文、Max 思考等级和真实任务测试。',
+      en: 'A Bilibili video guide by 小陈同学c_z showing how to connect DeepSeek V4 Pro to Claude Code with CC Switch, covering installation, API key setup, provider configuration, model switching, 1M context, Max thinking level, and real task testing.',
+      ja: '小陈同学c_z による Bilibili 動画ガイド。CC Switch で DeepSeek V4 Pro を Claude Code に接続し、インストール、API Key、Provider 設定、モデル切替、1M コンテキスト、Max 思考レベル、実タスク検証を紹介します。',
+    },
+    author: { name: '小陈同学c_z', url: 'https://space.bilibili.com/243917657' },
+    date: '2026-05-01',
+    category: 'video',
+    source: 'community',
+    readMinutes: 10,
+    externalUrl: 'https://www.bilibili.com/video/BV1pQRNBsEGs/',
+    accent: 'emerald',
+    emoji: '🎬',
+    featured: true,
+  },
+  {
     slug: 'yinmin-cc-switch-claude-code-getting-started',
     title: {
       zh: '使用 CC-Switch，一键配置你的 Claude Code',
