@@ -19,6 +19,7 @@ import micuIcon from '@/assets/icons/sponsors/micu.svg';
 import lemondataIcon from '@/assets/icons/sponsors/lemondata-app.png';
 import ctokIcon from '@/assets/icons/sponsors/ctok.svg';
 import lionccIcon from '@/assets/icons/sponsors/lioncc.svg';
+import claudeapiIcon from '@/assets/icons/sponsors/claudeapi.png';
 import ddsIcon from '@/assets/icons/sponsors/dds.svg';
 
 import minimaxBannerZh from '@/assets/banners/sponsors/minimax-zh.jpeg';
@@ -501,6 +502,30 @@ export const sponsors: Sponsor[] = [
       ja: 'カスタマー窓口連絡で $10 クレジット',
     },
     couponCode: 'cc-switch',
+  },
+  {
+    id: 'claudeapi',
+    name: 'Claude API',
+    icon: claudeapiIcon,
+    url: 'https://console.claudeapi.com/register?aff=pCLD',
+    tier: 'standard',
+    category: 'relay',
+    since: '2025-10',
+    tagline: {
+      zh: '官方渠道直供，零降智零逆向',
+      en: 'Official-channel relay, zero degradation',
+      ja: '公式チャネル直供、劣化・逆向きなし',
+    },
+    description: {
+      zh: 'Claude API 直连，三分钟接入 Claude Code 与 Agent 应用。基于 Anthropic 官方 Key + AWS Bedrock 官方渠道，非逆向、非降智，支持 Opus / Sonnet / Haiku 全系列模型，保留 Tool Use、1M 上下文等官方能力。适合 Claude Code 深度用户、Agent 工程师与企业技术团队，支持开票和团队对接。',
+      en: 'Direct Claude API access — connect Claude Code and Agent apps in 3 minutes. Powered by official Anthropic API keys + AWS Bedrock channels. No reverse engineering, no model degradation. Full Opus / Sonnet / Haiku lineup with Tool Use, 1M context, and more. Built for Claude Code power users, Agent engineers, and enterprise teams. Invoicing and team support available.',
+      ja: 'Claude API 直結 — わずか 3 分で Claude Code や Agent アプリに接続可能。Anthropic 公式キーおよび AWS Bedrock 公式チャネルに基づき、リバースエンジニアリングや性能劣化なし。Opus / Sonnet / Haiku 全モデルをサポートし、Tool Use や 1M コンテキストなどの公式機能を保持。ヘビーユーザー、Agent エンジニア、企業チームに最適。請求書発行およびチーム対応可能。',
+    },
+    perk: {
+      zh: '新用户可领取免费测试额度',
+      en: 'Free trial credit for new users',
+      ja: '新規ユーザーに無料テストクレジット',
+    },
   },
   {
     id: 'dds',

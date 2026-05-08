@@ -10,6 +10,7 @@ import {
 import { fadeInUpItem } from '@/lib/motion';
 import { cn, displayDomain } from '@/lib/utils';
 import { SponsorPerkBadge } from './SponsorPerkBadge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SponsorCardProps {
   sponsor: Sponsor;
@@ -159,6 +160,14 @@ export function SponsorCard({ sponsor, variant }: SponsorCardProps) {
       variants={fadeInUpItem}
       className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-md"
     >
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <span className="absolute inset-0" />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+          {description}
+        </TooltipContent>
+      </Tooltip>
       <div className="flex items-center gap-3">
         <div
           className={cn(
