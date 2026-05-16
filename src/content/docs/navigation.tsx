@@ -34,6 +34,7 @@ export const defaultDocSections: DocSection[] = [
       { id: 'edit', title: '编辑供应商' },
       { id: 'sort-duplicate', title: '排序与复制' },
       { id: 'usage-query', title: '用量查询' },
+      { id: 'claude-desktop', title: 'Claude Desktop' },
     ],
   },
   {

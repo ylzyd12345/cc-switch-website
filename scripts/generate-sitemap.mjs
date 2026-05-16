@@ -30,7 +30,7 @@ const docSections = [
   },
   {
     id: 'providers',
-    items: ['add', 'switch', 'edit', 'sort-duplicate', 'usage-query'],
+    items: ['add', 'switch', 'edit', 'sort-duplicate', 'usage-query', 'claude-desktop'],
   },
   {
     id: 'extensions',

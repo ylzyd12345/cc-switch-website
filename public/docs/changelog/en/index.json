@@ -1,6 +1,12 @@
 {
   "versions": [
     {
+      "version": "3.15.0",
+      "date": "2026-05-16",
+      "isPreRelease": false,
+      "summary": "Claude Desktop becomes a first-class managed surface with third-party provider switching via proxy gateway, role-based model mapping, major reverse-proxy hardening, Codex OAuth live model discovery, and a filter-driven usage dashboard Hero card"
+    },
+    {
       "version": "3.14.1",
       "date": "2026-04-23",
       "isPreRelease": false,

@@ -157,7 +157,7 @@ export default function DocsPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
-                      {t.docs.footer.lastUpdated.replace('{date}', '2026-04-08')}
+                      {t.docs.footer.lastUpdated.replace('{date}', '2026-05-16')}
                     </div>
                   </div>
 

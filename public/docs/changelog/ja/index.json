@@ -1,6 +1,12 @@
 {
   "versions": [
     {
+      "version": "3.15.0",
+      "date": "2026-05-16",
+      "isPreRelease": false,
+      "summary": "Claude Desktop が一等管理パネルに昇格（プロキシゲートウェイ経由のサードパーティプロバイダー切り替えを含む）、ロールベースのモデルマッピング、リバースプロキシの大幅強化、Codex OAuth ライブモデル検出、Usage ダッシュボードのフィルター駆動 Hero カード"
+    },
+    {
       "version": "3.14.1",
       "date": "2026-04-23",
       "isPreRelease": false,

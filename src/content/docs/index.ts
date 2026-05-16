@@ -17,6 +17,7 @@ const docPathMap: Record<string, Record<string, string>> = {
     edit: '2-providers/2.3-edit.md',
     'sort-duplicate': '2-providers/2.4-sort-duplicate.md',
     'usage-query': '2-providers/2.5-usage-query.md',
+    'claude-desktop': '2-providers/2.6-claude-desktop.md',
   },
   extensions: {
     default: '3-extensions/3.1-mcp.md',
@@ -65,6 +66,15 @@ const docMessages: Record<Language, { notFound: string; loadFailed: string; load
   },
 };
 
+const docRouteByPath = new Map<string, { sectionId: string; itemId: string }>();
+
+for (const [sectionId, items] of Object.entries(docPathMap)) {
+  for (const [itemId, relativePath] of Object.entries(items)) {
+    if (itemId === 'default' || docRouteByPath.has(relativePath)) continue;
+    docRouteByPath.set(relativePath, { sectionId, itemId });
+  }
+}
+
 function getDocRelativePath(sectionId: string, itemId?: string): string | null {
   const section = docPathMap[sectionId];
   if (!section) return null;
@@ -90,7 +100,18 @@ export function getDocSourcePath(language: Language, sectionId: string, itemId?:
   return `docs/user-manual/${language}/${relativePath}`;
 }
 
-function processDocContent(content: string) {
+function resolveDocLink(currentRelativePath: string, href: string) {
+  const [rawPath, hash = ''] = href.split('#');
+  const resolvedPath = new URL(rawPath, `https://ccswitch.local/${currentRelativePath}`).pathname.replace(/^\//, '');
+  const route = docRouteByPath.get(resolvedPath);
+
+  if (!route) return href;
+
+  const query = `?section=${encodeURIComponent(route.sectionId)}&item=${encodeURIComponent(route.itemId)}`;
+  return hash ? `${query}#${hash}` : query;
+}
+
+function processDocContent(content: string, currentRelativePath: string) {
   return content
     .replace(
       /!\[([^\]]*)\]\(\.\.\/(?:\.\.\/)?assets\/([^)]+)\)/g,
@@ -99,6 +120,10 @@ function processDocContent(content: string) {
     .replace(
       /\]\(\.\.\/\.\.\/\.\.\/release-notes\/([^)]+)\)/g,
       '](/docs/release-notes/$1)'
+    )
+    .replace(
+      /\]\(((?!https?:\/\/|mailto:|#|\/|\?)[^)]+\.md(?:#[^)]+)?)\)/g,
+      (_, href: string) => `](${resolveDocLink(currentRelativePath, href)})`
     );
 }
 
@@ -121,7 +146,7 @@ export async function fetchDocContent(language: Language, sectionId: string, ite
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const content = await response.text();
-    const processedContent = processDocContent(content);
+    const processedContent = processDocContent(content, filePath.replace(`/docs/${language}/`, ''));
 
     // Cache the result
     docCache[cacheKey] = processedContent;

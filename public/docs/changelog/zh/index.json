@@ -1,6 +1,12 @@
 {
   "versions": [
     {
+      "version": "3.15.0",
+      "date": "2026-05-16",
+      "isPreRelease": false,
+      "summary": "Claude Desktop 升级为一等管理面板（含第三方供应商代理切换）、按角色的模型映射、反向代理大幅强化、Codex OAuth 实时模型发现、用量看板筛选驱动 Hero 卡"
+    },
+    {
       "version": "3.14.1",
       "date": "2026-04-23",
       "isPreRelease": false,
