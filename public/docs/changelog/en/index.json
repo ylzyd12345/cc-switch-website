@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "3.16.1",
+      "date": "2026-06-01",
+      "isPreRelease": false,
+      "summary": "Codex stability patch: because some users did not want CC Switch to change how Codex config files are written, Codex App Enhancements now has a switch and is off by default. After enabling it, you can keep using Codex mobile remote control, official plugins, and other official-app features while using third-party APIs; this release also includes a series of stability fixes."
+    },
+    {
+      "version": "3.16.0",
+      "date": "2026-05-29",
+      "isPreRelease": false,
+      "summary": "Chat Completions → Responses format conversion for Codex (you can now use DeepSeek, Kimi, GLM in Codex!), unified Codex provider identity and history, an all-around upgraded app management surface, partner preset expansion, default model / pricing matrix upgraded to GPT-5.5 and Claude Opus 4.8, and proxy / format-conversion robustness hardening"
+    },
+    {
       "version": "3.15.0",
       "date": "2026-05-16",
       "isPreRelease": false,

@@ -2,6 +2,620 @@
 
 CC Switch 的重要版本更新记录。
 
+## [3.16.1] - 2026-06-01
+
+> Codex 稳定性补丁：由于部分用户反映不希望改变配置文件的写入方式，因此为 Codex 增强模式添加开关并默认关闭。开启此开关后，你可以在使用第三方 API 的情况下继续使用 Codex 的手机远程操作、官方插件等功能；本版本也包含一系列稳定性修复。
+
+### 使用攻略
+
+如果你希望在使用第三方 API 的时候解锁官方订阅才可以使用的远程操作 Codex、解锁官方插件，或希望在 Codex 中使用 DeepSeek / Kimi / GLM / MiniMax 等 Chat Completions 上游，建议先看这些文档：
+
+- **[使用第三方 API 时保留 Codex 远程操作和官方插件](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-official-auth-preservation-guide-zh.md)**：说明如何先完成官方登录，再开启 Codex 应用增强，让官方登录态留在 `auth.json`，同时把模型流量切到第三方 API。
+- **[在 Codex 中使用 DeepSeek：本地路由实战攻略](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-zh.md)**：从添加 Codex 供应商、开启本地路由，到验证请求转发的完整路径。
+- **[添加 Codex 供应商：Chat Completions 路由与模型映射](/zh/docs?section=providers&item=add)**：覆盖「需要本地路由映射」、模型映射表与思考能力配置。
+- **[本地代理服务](/zh/docs?section=proxy&item=service)** 与 **[本地路由](/zh/docs?section=proxy&item=routing)**：了解代理服务、接管 live 配置、以及相关风险提示。
+
+> [!WARNING]
+>
+> ## 唯一官方渠道声明（请务必阅读）
+>
+> CC Switch 是**完全免费、开源**的桌面应用，**不会向用户收取任何费用**。请仅通过下列官方渠道获取本软件：
+>
+> | 类别     | 唯一官方                                                                       |
+> | -------- | ------------------------------------------------------------------------------ |
+> | 官网     | **[ccswitch.io](https://ccswitch.io)**                                         |
+> | 源码     | **[github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)** |
+> | 下载     | **[GitHub Releases](https://github.com/farion1231/cc-switch/releases)**        |
+> | 作者     | **[@farion1231](https://github.com/farion1231)**                               |
+> | 举报山寨 | **[GitHub Issues](https://github.com/farion1231/cc-switch/issues)**            |
+>
+> **任何向你收费、要求充值、或索取登录凭据的"CC Switch"网站或客户端均为假冒**。如果你被诱导支付了费用，请立即停止操作并通过 GitHub Issues 反馈。
+
+### 概览
+
+CC Switch v3.16.1 是 v3.16.0 之后的一版 Codex 稳定性补丁。v3.16.0 让第三方 Codex 供应商通过 Chat Completions 路由成为一等公民；这一版则主要处理真实使用中暴露出的几个高风险边角：官方 ChatGPT / Codex OAuth 登录态在第三方供应商切换或本地路由接管期间被覆盖，Codex 模型目录在 live 回填、热切换、关闭接管恢复或编辑当前供应商时被清空，以及 Codex 的 `tool_search`、插件 / 连接器命名空间、自定义工具在 Chat Completions 上游路径中没有完整恢复为 Responses 事件。
+
+这版也加固了本地路由接管的所有权判断：切换供应商和开启 / 关闭接管现在按应用串行执行，判断 live 文件是否由代理接管时不再只看滞后的 `enabled` 或代理服务是否正在运行，而是结合备份和 live 中的代理占位符。这样可以避免刚开启接管、代理临时停止，或热切换时的普通 live 写入把代理托管配置覆盖掉。
+
+### 重点内容
+
+- **Codex OAuth 与第三方供应商切换更安全**：新增可选的官方认证保留设置；开启后，第三方供应商 token 写入 `config.toml`，官方 ChatGPT / Codex OAuth 登录继续留在 `auth.json`。
+- **Codex 模型目录不再被静默清空**：`modelCatalog` 以数据库为真相来源，live 回填、供应商切换、接管关闭恢复、编辑弹窗都会避免用丢失投影的 live 配置覆盖数据库。
+- **Codex Chat 工具 / 插件路由恢复**：Chat Completions 上游返回的 `tool_search`、已加载命名空间工具、自定义工具会重新映射回 Codex Responses 形态；流式自定义工具现在发出原生 `response.custom_tool_call_input.*` 事件。
+- **本地路由接管与热切换更稳**：供应商切换和接管开关按 app 串行，热切换会刷新 Codex live 中的供应商显示信息，但 endpoint 仍保持指向本地代理。
+- **诊断与平台兼容性修复**：Codex 代理错误返回更丰富上下文；Codex CLI 模型模板发现支持更多平台并提供 GPT-5.5 静态兜底；Windows 工具版本探测修复乱码与误判。
+
+### 新功能
+
+#### Codex 官方认证保留设置
+
+新增一个可选设置，用于在切换第三方 Codex 供应商时保留官方 ChatGPT / Codex OAuth 登录态。开启后，CC Switch 会把第三方供应商的 API key 放进 Codex `config.toml` 的 provider-scoped `experimental_bearer_token`，而不是覆盖 `auth.json` 里的官方登录缓存。
+
+由于部分用户不希望此功能改变配置文件的写入方式，因此该设置默认关闭，保持 v3.16.0 之前的兼容行为。需要同时使用官方 Codex 登录和第三方供应商的用户，可以在“设置 → Codex 应用增强”里手动开启。
+
+#### Codex DeepSeek 路由指南
+
+新增中 / 英 / 日三语的 Codex DeepSeek 路由指南，包含供应商路由要求、DeepSeek Codex 供应商表单配置，以及本地路由接管的截图说明。
+
+### 变更
+
+#### Codex 认证保留默认改为 opt-in
+
+官方认证保留设置默认关闭。这样第三方 Codex 供应商切换继续沿用旧行为，避免已有用户在不知情的情况下改变 `auth.json` / `config.toml` 的写入方式。
+
+#### Codex 切换供应商后提示重启
+
+Codex 的模型目录与部分配置在客户端启动时加载。现在成功切换 Codex 供应商后，界面会提示用户重启 Codex，让模型目录和配置变化真正生效。
+
+#### 供应商切换与接管开关串行化
+
+Codex / Claude / Gemini 的供应商切换与本地路由接管开关现在共享 per-app 锁，避免两个流程同时修改 live 配置和备份。判断 live 是否由代理接管时，也会优先看 live 备份与 `PROXY_MANAGED` 占位符，而不是只看代理服务是否正在运行。
+
+#### Codex 热切换刷新显示信息
+
+在本地路由接管期间热切换 Codex 供应商时，CC Switch 会刷新 live 配置中的 provider id、模型和显示名称，让 Codex 客户端菜单能跟随当前供应商；同时 base URL 仍保持本地代理地址，避免真实上游 endpoint 泄回 live 文件。
+
+### 修复
+
+#### Codex 接管期间编辑弹窗误显示 live OAuth
+
+当 Codex 处于本地路由接管状态时，live `auth.json` / `config.toml` 已被代理临时改写。编辑当前供应商如果继续读取 live，就会把代理占位符或官方 OAuth 登录误显示成供应商配置。现在编辑弹窗会明确提示：此处显示的是数据库中存储的供应商配置，而不是代理托管的 live 文件；即使代理服务暂时停止，只要该 app 仍处于接管状态，也会按接管逻辑处理。
+
+#### Codex OAuth 在接管期间被清空或覆盖
+
+修复多条 preserve-mode 接管路径，它们此前可能清空或覆盖官方 ChatGPT / Codex OAuth `auth.json`。现在接管检测会识别 `config.toml` 里的 `PROXY_MANAGED`，清理流程只移除代理占位符 token，第三方供应商错误归类为 official 时也不会再走官方 auth 覆盖路径。供应商同步与切换会把 live 备份和占位符视为接管所有权信号，避免正常 live 写入覆盖刚接管或代理暂停时的代理配置。
+
+#### Codex 模型目录数据丢失
+
+修复 `modelCatalog` 在 live 回填、当前供应商编辑弹窗、供应商切换、关闭接管恢复等场景被清空的问题。快照备份会保留已有 `model_catalog_json` 指针；由供应商重建的备份会从数据库真相来源重新生成目录投影；编辑当前供应商时会优先使用数据库里的模型目录，而不是信任可能已经丢失投影的 live 反解结果。
+
+同时，供应商切换现在会始终刷新生成的 Codex 模型目录 JSON（[#3360](https://github.com/farion1231/cc-switch/pull/3360)，感谢 [@Postroggy](https://github.com/Postroggy)）。
+
+#### Codex Chat 工具、插件和自定义工具恢复
+
+修复第三方 Codex 供应商走 Chat Completions 路由时，`tool_search`、已加载的 MCP / connector 命名空间工具、自定义工具无法完整恢复为 Codex Responses 形态的问题。非流式与流式 Chat 响应现在都会根据原始 Responses 请求恢复正确的工具类型、namespace、call id 与参数；自定义工具流式输出会发出原生的 `response.custom_tool_call_input.delta` 和 `response.custom_tool_call_input.done` 事件。
+
+#### Codex 代理错误诊断更完整
+
+Codex 转发失败时，现在返回包含 provider、model、endpoint、上游 HTTP 状态、稳定 `cc_switch_*` 错误码和规范 HTTP 状态的 JSON 错误。这样排查「到底是哪个供应商、哪个 endpoint、哪种上游错误」会清楚很多。
+
+#### Codex 原生余额 / Coding Plan 查询凭据
+
+修复原生余额与 Coding Plan 查询时跨 app 错用凭据的问题。现在每个 app 会解析自己的供应商凭据，不再把其他应用面的认证假设带进查询流程（[#3355](https://github.com/farion1231/cc-switch/pull/3355)，感谢 [@SiskonEmilia](https://github.com/SiskonEmilia)）。
+
+#### Codex CLI 发现与模型目录模板兜底
+
+修复第三方 Codex 模型目录投影对 Codex CLI 发现路径过窄的问题。现在后端会在多平台常见安装位置寻找 Codex CLI，并在仍找不到模板时使用内置 GPT-5.5 模型目录模板兜底（[#3382](https://github.com/farion1231/cc-switch/pull/3382)，感谢 [@chofuhoyu](https://github.com/chofuhoyu)）。
+
+#### Claude Desktop 官方供应商添加失败
+
+修复添加 Claude Desktop 官方供应商时报错的问题（[#3405](https://github.com/farion1231/cc-switch/pull/3405)，感谢 [@Eunknight](https://github.com/Eunknight)）。
+
+#### Kimi / Moonshot 工具思考历史规范化
+
+把 Kimi / Moonshot 加入 Anthropic 兼容工具思考历史 normalizer。后续轮次现在能正确重放 reasoning 与 tool-call 上下文，避免因为历史消息形态不符合上游要求而失败（[#3377](https://github.com/farion1231/cc-switch/pull/3377)，感谢 [@Neon-Wang](https://github.com/Neon-Wang)）。
+
+#### Windows 工具版本探测
+
+修复 Windows 上 `.cmd` / `.bat` 版本命令被错误加引号，以及本地化命令输出被解码成乱码的问题。此前这些问题会让可运行的工具显示为「已安装但无法运行」。
+
+### 升级提醒
+
+#### 官方 OAuth 保留需要手动开启
+
+如果你希望官方 ChatGPT / Codex OAuth 登录长期保留在 `auth.json`，同时又频繁切换第三方 Codex 供应商，请在设置中开启 Codex 官方认证保留。默认关闭是为了保持老用户的兼容行为。
+
+#### 修改模型映射后仍需重启 Codex
+
+Codex 在启动时读取 `model_catalog_json`。因此即使 v3.16.1 已修复模型目录被清空的问题，只要你修改了模型映射表，仍然需要重启 Codex 才能让 `/model` 菜单刷新。
+
+#### 接管期间编辑的是存储配置，不是 live 文件
+
+本地路由接管开启后，live `auth.json` / `config.toml` 会临时指向 CC Switch 代理。此时编辑供应商时看到的是数据库里保存的供应商配置，属于预期行为；关闭接管后，CC Switch 会按备份或数据库真相来源恢复 live 配置。
+
+### 风险提示
+
+本版本继续沿用此前版本对反向代理类功能的风险提示。
+
+**Codex OAuth 反向代理**：使用 ChatGPT 订阅的 Codex OAuth 反代可能违反 OpenAI 服务条款，详情见 [v3.13.0 release notes](v3.13.0-zh.md#️-风险提示)。
+
+**Codex 第三方供应商 Chat 路由**：通过 CC Switch 本地代理把 Codex 请求转换并转发到第三方供应商时，各供应商对计费、合规与数据留存的约束不同，请在使用前阅读目标供应商的服务条款。
+
+**Claude Desktop 第三方供应商代理切换**：通过 CC Switch 内置代理网关把 Claude Desktop 的请求转到第三方供应商时，同样需要遵守目标供应商的计费、合规与数据留存约束。
+
+用户启用上述功能即表示自行承担相关风险。CC Switch 不对因使用这些功能而导致的任何账号限制、警告或服务暂停承担责任。
+
+### 致谢
+
+感谢以下贡献者在 v3.16.1 中提交修复：
+
+- [#3360](https://github.com/farion1231/cc-switch/pull/3360)：Codex 供应商切换时始终更新模型目录 JSON，感谢 [@Postroggy](https://github.com/Postroggy)。
+- [#3355](https://github.com/farion1231/cc-switch/pull/3355)：原生余额 / Coding Plan 查询按 app 解析凭据，感谢 [@SiskonEmilia](https://github.com/SiskonEmilia)。
+- [#3405](https://github.com/farion1231/cc-switch/pull/3405)：修复 Claude Desktop 官方供应商添加报错，感谢 [@Eunknight](https://github.com/Eunknight)。
+- [#3382](https://github.com/farion1231/cc-switch/pull/3382)：Codex CLI 多平台发现与 GPT-5.5 模型模板兜底，感谢 [@chofuhoyu](https://github.com/chofuhoyu)。
+- [#3377](https://github.com/farion1231/cc-switch/pull/3377)：Kimi / Moonshot 工具思考历史规范化，感谢 [@Neon-Wang](https://github.com/Neon-Wang)。
+
+也感谢所有在 v3.16.0 发布后反馈 Codex OAuth、模型目录、本地路由接管和 Chat Completions 工具调用问题的用户。很多补丁都来自这些真实使用场景里的复现线索。
+
+### 下载与安装
+
+访问 [Releases](https://github.com/farion1231/cc-switch/releases/latest) 下载对应版本。
+
+#### 系统要求
+
+| 系统    | 最低版本                   | 架构                                |
+| ------- | -------------------------- | ----------------------------------- |
+| Windows | Windows 10 及以上          | x64                                 |
+| macOS   | macOS 12 (Monterey) 及以上 | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | 见下表                     | x64 / ARM64                         |
+
+#### Windows
+
+| 文件                                     | 说明                                |
+| ---------------------------------------- | ----------------------------------- |
+| `CC-Switch-v3.16.1-Windows.msi`          | **推荐** - MSI 安装包，支持自动更新 |
+| `CC-Switch-v3.16.1-Windows-Portable.zip` | 便携版，解压即用，不写入注册表      |
+
+#### macOS
+
+| 文件                             | 说明                                          |
+| -------------------------------- | --------------------------------------------- |
+| `CC-Switch-v3.16.1-macOS.dmg`    | **推荐** - DMG 安装包，拖入 Applications 即可 |
+| `CC-Switch-v3.16.1-macOS.zip`    | 解压后拖入 Applications，Universal Binary     |
+| `CC-Switch-v3.16.1-macOS.tar.gz` | 用于 Homebrew 安装和自动更新                  |
+
+Homebrew 安装：
+
+```bash
+brew install --cask cc-switch
+```
+
+更新：
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+Linux 资产同时提供 **x86_64** 和 **ARM64**（`aarch64`）两种架构。资产文件名中包含架构标识，请按你机器的 `uname -m` 输出选择对应版本：
+
+- `CC-Switch-v3.16.1-Linux-x86_64.AppImage` / `.deb` / `.rpm`
+- `CC-Switch-v3.16.1-Linux-arm64.AppImage` / `.deb` / `.rpm`
+
+| 发行版                                  | 推荐格式    | 安装方式                                                               |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` 或 `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` 或 `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage` | 添加执行权限后直接运行，或使用 AUR                                     |
+| 其他发行版 / 不确定                     | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+## [3.16.0] - 2026-05-29
+
+> 为 Codex 增加 Chat Completions -> Response 格式转换（你可以在 Codex 里使用 DeepSeek, Kimi, GLM 了！）、Codex 供应商身份与历史统一、应用管理面板全方位增强、合作伙伴预设扩张、默认模型 / 定价矩阵升级到 GPT-5.5 与 Claude Opus 4.8、代理与格式转换鲁棒性强化
+
+### 使用攻略
+
+本版本最主打的两块能力是 **Codex 第三方供应商 Chat Completions 路由**与**应用内受管 CLI 工具管理**。如果你想让 DeepSeek、Kimi、MiniMax 这类只支持 OpenAI Chat 协议的供应商在 Codex 里直接可用，或者想在应用内一站式安装 / 升级 CLI 工具，建议先读这几篇：
+
+- **[在 Codex 中使用 DeepSeek：本地路由实战攻略](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-zh.md)** —— 以 DeepSeek 内置预设为例，演示从添加 Codex 供应商、开启本地路由到验证请求转发的完整路径。
+- **[添加 Codex 供应商：Chat Completions 路由与模型映射](/zh/docs?section=providers&item=add)** —— 覆盖「需要本地路由映射」开关、模型映射表、思考能力（reasoning）自适应识别的完整流程。
+- **[设置 → 关于：受管 CLI 工具管理](/zh/docs?section=getting-started&item=settings)** —— 覆盖版本检测、单独升级 / 全部升级、冲突诊断、按安装来源锚定的升级命令。
+
+> [!WARNING]
+>
+> ## 唯一官方渠道声明（请务必阅读）
+>
+> CC Switch 是**完全免费、开源**的桌面应用，**不会向用户收取任何费用**。最近发现多个山寨网站冒用 CC Switch 名义诱导用户付费、收集账号信息，部分已造成实际经济损失。请仅通过下列官方渠道获取本软件：
+>
+> | 类别     | 唯一官方                                                                       |
+> | -------- | ------------------------------------------------------------------------------ |
+> | 官网     | **[ccswitch.io](https://ccswitch.io)**                                         |
+> | 源码     | **[github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)** |
+> | 下载     | **[GitHub Releases](https://github.com/farion1231/cc-switch/releases)**        |
+> | 作者     | **[@farion1231](https://github.com/farion1231)**                               |
+> | 举报山寨 | **[GitHub Issues](https://github.com/farion1231/cc-switch/issues)**            |
+>
+> **任何向你收费、要求充值、或索取登录凭据的"CC Switch"网站或客户端均为假冒**。如果你被诱导支付了费用，请立即停止操作并通过 GitHub Issues 反馈，让我们能尽快下线相关山寨站点。
+
+### 概览
+
+CC Switch v3.16.0 自 v3.15.0 以来的开发核心，是把**第三方 Codex 供应商通过 Chat Completions 路由升级为一等公民**。Codex 原生只认 OpenAI Responses API 与 GPT 系列模型，本版本让 CC Switch 的本地代理把 Codex 发出的 Responses 请求转换为上游的 Chat Completions，再把 JSON 与 SSE 流式响应重建回 Responses 形态，沿途保留 `reasoning_content` / 内联 `<think>` 块 / 流式推理摘要 / 工具调用 / `previous_response_id` 续接状态，并把错误信封规范化、在 Stream Check 中正确探测 Chat 格式供应商。配套上货 22 个带显式模型目录的 Chat 路由预设（DeepSeek、智谱 GLM、Kimi、MiniMax、StepFun、百度千帆、百炼、ModelScope、Longcat、百灵、小米 MiMo、火山 Agentplan、BytePlus、豆包 Seed、SiliconFlow、Novita AI、Nvidia 等）。
+
+Codex 第三方供应商的**身份与历史**这一版被统一并加固：所有第三方供应商现在归并到稳定的 `custom` model-provider 桶，并提供一次性设备迁移来改写历史 JSONL 会话与 `state_5.sqlite` 线程表（原文件备份在 `~/.cc-switch/backups/` 下），避免因供应商 id 变化导致过往会话"凭空消失"；同时修复了 live 读取 / 切换过程中 OAuth 登录态、用户选中的目录模型、用户自定义 provider id 被覆盖的问题。
+
+本版本还新增了**应用内受管 CLI 工具生命周期**：设置页的「关于」Tab 升级为 Claude / Codex / Gemini / OpenCode / OpenClaw / Hermes 的工具管理面板，支持静默安装 / 更新、全部升级、冲突诊断、按安装来源锚定的升级，以及对 WSL 的处理和"已安装但跑不起来"状态的可见化。
+
+供应商生态与模型矩阵同步刷新：新增 APIKEY.FUN、APINebula、AtlasCloud、SudoCode、小米 MiMo Token Plan、Claude Desktop 官方预设；跨应用刷新合作伙伴链接与默认模型 / 定价；默认 Claude Opus 模型线升级到 **4.8**，适用处的 GPT 默认升级到 **5.5**。此外还在用量可观测性、繁体中文本地化、文档、以及代理 / 格式转换的鲁棒性上做了大量打磨与修复。
+
+### 重点内容
+
+- **Codex Chat Completions 路由**：Codex 供应商现在可以由仅支持 OpenAI Chat Completions 的上游提供服务。CC Switch 把 Codex 的 Responses 请求转成 Chat Completions、把 JSON 与 SSE 响应重建回 Responses 形态、保留 reasoning / `<think>` / 工具调用状态、规范化错误信封，并在 Stream Check 中正确探测 Chat 格式供应商
+- **Codex 第三方供应商身份与历史统一并更安全**：第三方 Codex 供应商现在共用稳定的 `custom` model-provider 桶，配一次性迁移改写历史 JSONL 会话与 `state_5.sqlite` 线程，并修复 live 读取 / 切换时 OAuth 登录态、用户选中的目录模型、用户自定义 provider id 的保留
+- **受管 CLI 工具管理**：「关于」页升级为 Claude / Codex / Gemini / OpenCode / OpenClaw / Hermes 的工具管理面板，含安装 / 更新动作、全部升级、冲突诊断、按来源锚定的升级、WSL 处理，以及"已安装但跑不起来"状态可见化
+- **供应商生态与模型矩阵刷新**：新增 APIKEY.FUN、APINebula、AtlasCloud、SudoCode、小米 MiMo Token Plan、Claude Desktop 官方预设；跨应用刷新合作伙伴链接与默认模型 / 定价；默认 Claude Opus 升级到 4.8、适用处 GPT 默认升级到 5.5
+- **用量与文档打磨**：用量看板在日志写入时即时响应更新，修复自定义用量脚本摘要与 subagent 会话日志计费，繁体中文 UI 本地化落地，新增德文 README 与扩充后的 Claude Desktop / Codex Chat / 工具管理手册
+- **代理与转换硬化**：修复 Codex Chat 推理 / 缓存 / usage 边角情况、DeepSeek Anthropic 工具思考历史、Claude 兼容的空 `tool_calls` 流、受管账号接管鉴权、MiMo 推理输出、Gemini Native 工具调用重放，以及多条易 panic 的代理路径
+
+### 新功能
+
+#### Codex Chat Completions 路由
+
+Codex 供应商现在可以由只会说 OpenAI Chat Completions API 的上游提供服务。CC Switch 的本地代理把 Codex 发出的 Responses 请求转换为 Chat Completions，并把 Chat 响应（JSON 与 SSE 两种）重建回 Responses 形态，沿途保留 `reasoning_content`、内联 `<think>` 块、流式推理摘要、工具调用，以及 `previous_response_id` 续接。一个有界的 Codex Chat 历史缓存会在工具输出之前恢复对应的工具调用。
+
+> 💡 特别感谢 [@EldenPdx](https://github.com/EldenPdx) 的 PR [#2804](https://github.com/farion1231/cc-switch/pull/2804)：本功能的 Chat ↔ Responses 格式转换实现参考了他在该 PR 中的实现。
+
+#### 22 个带 Chat 路由的 Codex 第三方供应商预设
+
+为主流中国开源模型启用了 Chat Completions 路由并带显式模型目录——DeepSeek、智谱 GLM（+ 英文站）、Kimi、MiniMax（+ 英文站）、StepFun（+ 英文站）、百度千帆 Coding Plan、百炼（Bailian）、ModelScope、Longcat、百灵（BaiLing）、小米 MiMo（+ Token Plan）、火山 Agentplan、BytePlus、豆包 Seed、SiliconFlow（+ 英文站）、Novita AI、Nvidia。每个预设都声明了自己的上下文窗口，便于 UI 给模型映射行确定尺寸。
+
+#### Codex 模型映射表
+
+Codex 供应商表单现在提供模型目录（每行：模型 + 显示名 + 上下文窗口），它是上游模型列表的唯一真相来源，并投影到 `~/.codex/cc-switch-model-catalog.json`。
+
+#### Stream Check 支持 Codex Chat 供应商
+
+Stream Check 现在对 Chat 格式的 Codex 供应商改用 Chat 形态的请求体打 `/chat/completions`，而不是 `/v1/responses`；并把 URL 回退顺序与生产环境的 `CodexAdapter` 对齐（仅 origin 的 base URL 先打 `/v1/<endpoint>`），这样裸路径上的非 404 错误不会再把一个正常工作的供应商误判为不可用。
+
+#### Codex Chat 思考能力（Reasoning）自适应
+
+当 Codex 供应商走 Chat Completions 路由时，CC Switch 现在会**自动识别**上游的推理接口——依据是供应商的名称、base URL 和模型名——并注入正确的思考参数（`thinking:{type}`、`enable_thinking`、`reasoning_split`、顶层 `reasoning_effort`，或 OpenRouter 的原生 `reasoning:{effort}` 对象），无需手动配置。聚合 / 托管平台（OpenRouter、SiliconFlow）按**平台优先**匹配，因为同一个模型在不同平台上可能暴露不同的推理控制。只暴露"思考开 / 关"开关的供应商（Kimi、GLM、Qwen、MiniMax、MiMo、SiliconFlow）会**丢弃 effort 等级**而不是透传一个不支持的字段——因此在 Codex 里调节这类供应商的思考等级不会有任何效果——而有真实 effort 档位的供应商（DeepSeek、OpenRouter，以及 StepFun 仅 `step-3.5-flash-2603`）则会把等级透传上去。OpenRouter 特别使用原生 `reasoning:{effort}` 对象，把 `max` 钳到 `xhigh`（它的枚举里没有 `max`），并显式转发 `effort:"none"` 以便关闭推理。
+
+#### Codex Goal Mode 与远程压缩控制
+
+Codex 配置编辑现在为第三方供应商暴露一个 Goal Mode 开关和一个远程压缩（Remote Compaction）开关；新建的 Codex 模板默认 `disable_response_storage = true`，同时仍允许显式开启 goal 支持。
+
+#### 小米 MiMo Token Plan 预设
+
+新增小米 MiMo Token Plan 预设，规格与官方文档对齐（#2803，感谢 @BlueOcean223）。
+
+#### Claude Desktop 官方预设
+
+新增一个 Claude Desktop 官方预设，用于恢复原生 Claude Desktop 登录，并附带本地化的 Claude Desktop 使用指南（中 / 英 / 日）。
+
+#### 受管 CLI 工具生命周期
+
+为受管 CLI 工具新增静默安装 / 更新命令、最新版本检查、单工具与批量动作、全部升级，以及跨 PATH、Homebrew、npm、pnpm、bun、volta、fnm、nvm、scoop、WinGet、Windows 原生路径和 WSL 的多安装诊断。
+
+#### 按来源感知的工具诊断
+
+设置 / 关于 页面现在可以诊断冲突的工具安装、为每条路径展示具体的安装来源与版本，并生成由后端规划、锚定到真实安装来源的升级命令。
+
+#### 实时用量刷新
+
+后端现在在代理日志、会话日志同步或汇总写入用量数据时发出 `usage-log-recorded` 事件；用量看板监听该事件并立即让查询失效，而不是等到下一个轮询周期（#3027，感谢 @in30mn1a）。
+
+#### 繁体中文本地化
+
+新增 `zh-TW` UI 本地化与一个设置语言选项（#3093，感谢 @LaiYueTing）。
+
+#### 德文 README
+
+新增 `README_DE.md` 并从现有 README 的语言切换器中链接到它（#2994，感谢 @flitzrrr）。
+
+#### 新合作伙伴预设
+
+跨各受支持的应用面新增 APIKEY.FUN、APINebula、AtlasCloud、SudoCode 合作伙伴预设，含合作伙伴文案、图标与 README 条目。
+
+### 变更
+
+#### Codex 第三方供应商统一进 "custom" 历史桶
+
+Codex 按 `model_provider` 过滤可恢复历史，因此在供应商专属 id 之间切换会让过去的会话看起来"消失"了。所有第三方供应商现在归并到单一稳定的 `custom` 桶（保留 `openai` / `ollama` 这类预留的内置 id），并配一次性设备迁移：改写历史 JSONL 会话与 `state_5.sqlite` 线程表，原文件备份到 `~/.cc-switch/backups/codex-history-provider-migration-v1/`。
+
+#### Codex 供应商表单简化
+
+从 Codex 表单中移除了 API Format 选择器（`wire_api` 永远是 `responses`，该选择器会误导用户以为能改协议）；模型映射表现在是唯一真相来源，不再有隐藏的默认条目；表单注明改动目录后需要重启 Codex，因为 `model_catalog_json` 在启动时加载。表单只保留「需要本地路由映射」开关。
+
+#### Codex 本地路由开关提示重写
+
+把「关 / 开」两段提示从"场景描述"改写为"动作指引"（什么时候该开），并在中 / 英 / 日三语同步。
+
+#### Codex Live 配置保留
+
+Codex live 配置读取不再强制改写用户的 `model_provider` 字段；供应商作用域的 `experimental_bearer_token` 处理现在会在第三方供应商之间切换时保留 OAuth 登录态。
+
+#### 工具安装 / 升级策略
+
+受管工具安装现在优先使用官方原生安装器（在有的情况下），适当时回退到包管理器，对兼容工具先跑 self-update，把升级锚定到检测到的安装来源，并在工作进行中锁定重复的批量动作。
+
+#### 「关于」页升级为工具管理
+
+设置的「关于」页现在呈现已安装 / 最新版本、安装与更新动作、冲突诊断、WSL shell 偏好，以及对损坏或跑不起来工具更清晰的状态。
+
+#### 默认模型与定价刷新
+
+默认 Claude Opus 模型升级到 4.8，适用处把基于 GPT 的预设与模板迁到 GPT-5.5，刷新定价种子，把 Claude Desktop 模型映射与 Claude Code 的三角色档位对齐，并重命名 OpenCode 的 Go 预设以去掉一个陈旧的模型后缀。
+
+#### 合作伙伴链接刷新
+
+更新了胜算云推荐链接、Atlas Cloud 的 UTM 链接，以及跨各 README 语言版本与供应商元数据中的合作伙伴文案。
+
+#### Homebrew 官方 Cask 安装
+
+由于 CC Switch 已进入 Homebrew 官方仓库，安装简化为 `brew install --cask cc-switch`；各 README 中移除了对私有 tap 的要求。
+
+#### 共享前端工具
+
+用一个共享的 `deepClone` helper 替换 JSON stringify / parse 的深拷贝写法，并抽取了一个共享的 `useTauriEvent` hook（#3140，感谢 @ChongBiaoZhang）。
+
+### 修复
+
+#### Codex Chat 错误响应转换为 Responses 信封
+
+Codex Chat → Responses 桥接此前会原样透传上游错误体，导致 Codex 客户端无法识别 MiniMax 的 `base_resp`、裸 OpenAI Chat 错误，或纯文本 / HTML 错误页。现在错误会被规整为标准的 `{error: {message, type, code, param}}` 信封并保留原始 HTTP 状态码；非 JSON 体会被包裹并在 UTF-8 字符边界截断到 1KB。同时修复了一个既存的 append-vs-insert bug，它会在重写后的 JSON 体上产生重复的 `Content-Type` 头。
+
+#### Codex 流中段 system 消息折叠
+
+MiniMax 的 OpenAI 兼容端点会严格拒绝任何非首位的 `system` 消息（错误 2013）。现在所有 `system` 片段会被折叠为单条首位消息（按原顺序拼接），对宽松后端也是无损的。
+
+#### Codex 模型目录重启后被清空
+
+编辑当前激活的 Codex 供应商会触发一次省略了 `modelCatalog` 的 live 读取，于是随后的保存会静默销毁用户配置的模型映射。Live 读取现在会反向解析磁盘上的目录投影，往返出与保存路径写入的相同形状。
+
+#### Codex 模型目录无限渲染循环
+
+打断了目录表格与其父状态之间的双向同步环路——它在添加或编辑条目时会导致 UI 严重抖动。
+
+#### Codex Chat 保留用户选中的目录模型
+
+客户端从目录里选中的模型（例如通过 `/model`）不再被 `config.toml` 的默认模型覆盖。
+
+#### Codex Chat 推理与缓存稳定性
+
+在 Codex 省略或改写 `previous_response_id` 时恢复一个唯一的 call-id 回退；停止从 `previous_response_id` 派生缓存身份；并在工具转换中对可解析的 JSON 字符串载荷做规范化，以便前缀缓存稳定复用。
+
+#### Codex Chat 流式 usage 恢复
+
+Responses → Chat 转换现在会在请求为流式时注入 `stream_options.include_usage`（并入客户端提供的任何 `stream_options`），这样 Kimi、MiniMax 这类 OpenAI 兼容上游会重新吐出尾部的 usage 块。此前它们在 Codex Chat 路径上的流式 token / 成本 / 缓存统计都被记成了零。
+
+#### Codex Chat 工具调用推理回填
+
+Kimi / Moonshot、DeepSeek 这类思考模型会拒绝携带 `tool_calls` 但 `reasoning_content` 为空的 assistant 消息。当跨轮历史恢复未命中时（代理重启、`call_id` 含糊，或某轮上游没有推理），现在会在最后一遍补回一个占位 `reasoning_content`——真实的尾部推理仍会优先附上——这样请求不再因 `reasoning_content is missing in assistant tool call message` 而失败。
+
+#### 受管账号 Claude 接管鉴权
+
+受管账号供应商（GitHub Copilot / Codex OAuth）在接管 Claude live 配置时，现在会丢弃 token 环境变量键、只写入 `ANTHROPIC_API_KEY` 占位符，并带一个出站守卫拒绝把 `PROXY_MANAGED` 占位符发往上游。
+
+#### 接管期间的 Claude Desktop profile 同步
+
+代理接管时现在会同步 Claude Desktop 的 profile 数据，模型路由与 Claude Code 的三角色档位对齐，并修正了 Cowork egress profile（#3157、#3172，感谢 @MelorTang、@JGSphaela）。
+
+#### 受管账号接管的模型字段
+
+本地路由现在在受管账号上从目标供应商取接管模型字段，而不是携带陈旧的模型值。
+
+#### DeepSeek Anthropic 工具思考历史
+
+规范化了 DeepSeek Anthropic 兼容的工具思考历史，让后续轮次能够重放推理 / 工具调用上下文而不产生畸形消息（#3203，感谢 @Q3yp）。
+
+#### Claude 兼容流中的空工具调用
+
+修复了一个 Claude 兼容流式边角情况：空的 `tool_calls` 数组会重置块状态并破坏流式响应（#2915，感谢 @zhizhuowq）。
+
+#### Claude Code 代理路径的 MiMo 推理
+
+在 Claude Code 代理路径上新增 MiMo 的 `reasoning_content` 支持（#2990，感谢 @zhangyapu1）。
+
+#### Gemini Native 工具调用鲁棒性
+
+修复了长多轮会话中合成工具调用 ID 的 `functionResponse.name` 解析（422）与 `thought_signature` 重放（400）问题（#2814，感谢 @Tiancrimson）。
+
+#### 会话日志 subagent token 计费
+
+`collect_jsonl_files()` 现在会扫描此前被漏掉的 subagent JSONL 日志，使 subagent 的 token 用量被计入会话成本（仅会话日志模式）（#2821，感谢 @LaoYueHanNi）。
+
+#### 用量看板 / 同步稳定性
+
+修复了非 ASCII 模型名导致的 Codex 用量同步 panic、自定义用量脚本摘要，以及用量汇总后缺失实时刷新的问题（#3027、#3129，感谢 @in30mn1a、@hanhan3344）。
+
+#### 智谱 Coding Plan 配额档位排序
+
+当 5 小时桶利用率为 0% 时，智谱 API 会省略 `nextResetTime`；旧的 `i64::MAX` 哨兵会把这类条目排到最后，导致周窗口错误地占用五小时槽位。现在档位排序会让缺失的 `nextResetTime` 映射到五小时桶，使智谱 Coding Plan 的托盘与用量配额显示保持正确。
+
+#### 技能按 key 安装
+
+从 skills.sh 搜索结果安装时现在使用唯一 key 而不是目录名，使共享目录名的技能能安装到正确的那个（#2784，感谢 @zhaomoran）；同时修复了一处技能同步的复制回退（#2791，感谢 @rogerdigital）。
+
+#### 用量价格输入精度
+
+把价格输入步长降到 0.0001，使 DeepSeek 缓存读取这类不足一分的成本也能录入（#2793，关闭 #2503，感谢 @rogerdigital）。
+
+#### Ghostty 干净窗口启动
+
+Ghostty 现在打开单个干净窗口，而不是克隆已有标签页；其他终端则通过 `open -na` 打开新窗口（#2801，关闭 #2798，感谢 @luw2007）。
+
+#### 工具版本与更新可靠性
+
+版本探测不再掩盖跑不起来的安装；预发布工具在版本检查中被正确处理；批量更新逐工具执行；安装 / 更新按钮在预检期间保持锁定；锚定升级分支强制使用绝对路径；WSL 安装器路径在需要时使用原生 Unix 安装器。
+
+#### Codex mise 检测
+
+修复了 Codex 的 mise 环境检测（#2822，感谢 @iambinlin）。
+
+#### Codex 归档会话
+
+Codex 的归档会话现在会被纳入会话发现（#2861，感谢 @nanmen2）。
+
+#### Codex Chat 空工具参数
+
+在 Codex Chat 转换中，空的工具调用参数载荷会被强制为 `{}`，使上游与客户端收到合法 JSON。
+
+#### Claude 供应商 deeplink 导入
+
+通过 deeplink 导入 Claude 供应商时现在会保留自定义环境字段（#2928，感谢 @doutuifei）。
+
+#### OMO 推荐模型
+
+把 OMO 推荐模型与上游默认值同步，并改进了「填入推荐」的反馈。
+
+#### 胜算云模型 ID 加前缀以正确路由
+
+胜算云（ShengSuanYun）预设现在带上了上游网关要求的厂商前缀——`anthropic/…`、`google/…`、`openai/…`（如 `anthropic/claude-sonnet-4.6`、`google/gemini-3.1-pro-preview`）——覆盖 Claude Code、Claude Desktop、Codex、Gemini、OpenCode、OpenClaw 各预设，含 Claude Code 路由环境变量（`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_{HAIKU,SONNET,OPUS}_MODEL`），使它们解析到合法的上游模型而不是路由失败。
+
+#### ClaudeAPI 重新启用模型测试
+
+把 ClaudeAPI 预设（Claude Code 与 Claude Desktop）从 `third_party` 重新归类为 `aggregator`，使其模型测试按钮不再被第三方 Claude 门禁禁用；合作伙伴金星不受影响，因为它由 `isPartner` 而非 category 驱动。
+
+#### 关于页版本检查
+
+版本检查现在能处理预发布工具版本，不会再误判更新状态。
+
+#### App 切换器文本裁切
+
+移除了一个会裁切 App 切换器文本的固定宽度约束（#3161，感谢 @loocor）。
+
+#### useEffect 竞态条件
+
+为 `App.tsx` 的 effects 加了 active-flag 模式以防卸载时的监听器泄漏，并守卫了把 `undefined` 语言存进 localStorage 的情况（#2827，感谢 @Zylo206）。
+
+### 移除
+
+#### LionCC 赞助商与预设
+
+跨各 README、供应商配置与 locale 移除了 LionCC 赞助商条目与 LionCCAPI 预设（图标资源保留）。
+
+#### AICoding 合作伙伴条目
+
+从 README 赞助商列表、供应商预设与 i18n 元数据中移除了 AICoding 合作伙伴。
+
+#### Kimi For Coding 的 Codex 预设
+
+从 Codex 预设目录中移除了 Kimi For Coding 预设。
+
+#### CLI 卸载命令提示
+
+从工具管理 UI 中去掉了生成的 CLI 卸载命令提示，同时保留冲突诊断的可见性。
+
+### 文档
+
+#### Codex Chat 供应商支持
+
+在 changelog 与用户手册中记录了 Chat Completions 路由、供应商支持、推理自适应识别，以及本地路由指引。
+
+#### 设置手册刷新
+
+更新了设置文档，覆盖新的受管工具生命周期与 Hermes 安装器行为。
+
+#### Claude Desktop 指南
+
+新增了本地化的 Claude Desktop 指南页与截图，覆盖供应商设置、导入、模型映射，以及本地路由上下文。
+
+#### 安装文档
+
+更新了安装文档与 README，推荐官方 Homebrew cask，并跨各语言刷新了 v3.15.0 发布说明里关于山寨站点的警告措辞。
+
+### ⚠️ 升级提醒
+
+#### Codex 第三方供应商历史一次性迁移
+
+升级后首次启动会对 Codex 历史执行一次性迁移：把第三方供应商归并到 `custom` 桶，并改写历史 JSONL 会话与 `state_5.sqlite` 线程表。原文件会备份到 `~/.cc-switch/backups/codex-history-provider-migration-v1/`。这一步是为了修复"切换供应商后过往会话消失"的问题——迁移后历史能正常恢复。
+
+#### Codex 改动模型目录需重启
+
+Codex 在启动时加载 `model_catalog_json`，因此在 CC Switch 里改动模型映射表后，需要**重启 Codex** 才能让新目录生效。
+
+#### Chat 路由供应商的思考等级可能无效
+
+对只暴露"思考开 / 关"开关的供应商（Kimi、GLM、Qwen、MiniMax、MiMo、SiliconFlow），在 Codex 里调节思考等级（`model_reasoning_effort` 的 low / medium / high）**不会有任何效果**——CC Switch 不会把不被支持的 effort 字段透传给它们。只有具备真实 effort 档位的供应商（DeepSeek、OpenRouter，以及 StepFun 仅 `step-3.5-flash-2603`）调节等级才真正生效。
+
+#### 默认模型升级到 Opus 4.8 / GPT-5.5
+
+默认 Claude Opus 模型线升级到 4.8，适用处的 GPT 默认升级到 5.5。如果你依赖某个固定的旧默认模型，升级后请检查相关预设 / 模板的模型字段是否符合预期。
+
+### ⚠️ 风险提示
+
+本版本在涉及反向代理类功能上沿用 v3.12.3 / v3.13.0 / v3.15.0 提出的风险提示。
+
+**GitHub Copilot 反向代理**：使用 Copilot 的反代路径可能违反 GitHub / Microsoft 服务条款。详情见 [v3.12.3 release notes](v3.12.3-zh.md#️-风险提示)。
+
+**Codex OAuth 反向代理**：使用 ChatGPT 订阅的 Codex OAuth 反代可能违反 OpenAI 服务条款，详情见 [v3.13.0 release notes](v3.13.0-zh.md#️-风险提示)。
+
+**Codex 第三方供应商 Chat 路由**：通过 CC Switch 本地代理把 Codex 请求转换并转发到第三方供应商时，各供应商对计费、合规与数据留存的约束各不相同，请在使用前阅读目标供应商的服务条款。
+
+**Claude Desktop 第三方供应商代理切换**：通过 CC Switch 内置代理网关把 Claude Desktop 的请求转到第三方供应商时，第三方供应商对计费、合规与数据留存的约束各不相同，请在使用前阅读目标供应商的服务条款。
+
+用户启用上述功能即表示**自行承担所有风险**。CC Switch 不对因使用这些功能而导致的任何账号限制、警告或服务暂停承担责任。
+
+### 下载与安装
+
+访问 [Releases](https://github.com/farion1231/cc-switch/releases/latest) 下载对应版本。
+
+#### 系统要求
+
+| 系统    | 最低版本                   | 架构                                |
+| ------- | -------------------------- | ----------------------------------- |
+| Windows | Windows 10 及以上          | x64                                 |
+| macOS   | macOS 12 (Monterey) 及以上 | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | 见下表                     | x64 / ARM64                         |
+
+#### Windows
+
+| 文件                                     | 说明                                |
+| ---------------------------------------- | ----------------------------------- |
+| `CC-Switch-v3.16.0-Windows.msi`          | **推荐** - MSI 安装包，支持自动更新 |
+| `CC-Switch-v3.16.0-Windows-Portable.zip` | 便携版，解压即用，不写入注册表      |
+
+#### macOS
+
+| 文件                             | 说明                                          |
+| -------------------------------- | --------------------------------------------- |
+| `CC-Switch-v3.16.0-macOS.dmg`    | **推荐** - DMG 安装包，拖入 Applications 即可 |
+| `CC-Switch-v3.16.0-macOS.zip`    | 解压后拖入 Applications，Universal Binary     |
+| `CC-Switch-v3.16.0-macOS.tar.gz` | 用于 Homebrew 安装和自动更新                  |
+
+> macOS 版本已通过 Apple 代码签名和公证，可直接安装使用。
+
+#### Homebrew（macOS）
+
+> 🎉 CC Switch 现已收录至 Homebrew 官方 cask 仓库，无需添加第三方 tap！
+
+```bash
+brew install --cask cc-switch
+```
+
+更新：
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+> Linux 资产同时提供 **x86_64** 和 **ARM64**（`aarch64`）两种架构。资产文件名中包含架构标识，请按你机器的 `uname -m` 输出选择对应版本：
+>
+> - `CC-Switch-v3.16.0-Linux-x86_64.AppImage` / `.deb` / `.rpm`
+> - `CC-Switch-v3.16.0-Linux-arm64.AppImage` / `.deb` / `.rpm`
+
+| 发行版                                  | 推荐格式    | 安装方式                                                               |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` 或 `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` 或 `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage` | 添加执行权限后直接运行，或使用 AUR                                     |
+| 其他发行版 / 不确定                     | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
 ## [3.15.0] - 2026-05-16
 
 > Claude Desktop 升级为一等管理面板（含第三方供应商代理切换）、按角色的模型映射、反向代理大幅强化、Codex OAuth 实时模型发现、用量看板筛选驱动 Hero 卡

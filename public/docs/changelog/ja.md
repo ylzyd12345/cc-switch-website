@@ -2,6 +2,620 @@
 
 CC Switch の重要なリリース更新記録です。
 
+## [3.16.1] - 2026-06-01
+
+> Codex 安定性パッチ: 一部のユーザーから「設定ファイルの書き込み方式を変えたくない」というフィードバックがあったため、Codex アプリ拡張にスイッチを追加し、デフォルトではオフにしました。有効化すると、サードパーティ API を使いながら Codex のモバイルリモート操作、公式プラグインなどの公式アプリ機能を引き続き利用できます。本リリースには一連の安定性修正も含まれます。
+
+### 利用ガイド
+
+サードパーティ API 利用中に、公式サブスクリプションでのみ使える Codex のリモート操作や公式プラグインを有効化したい場合、または DeepSeek / Kimi / GLM / MiniMax などの Chat Completions 上流を Codex で使いたい場合は、まず以下のドキュメントをご覧ください：
+
+- **[サードパーティ API 利用時に Codex のリモート操作と公式プラグインを保持する](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-official-auth-preservation-guide-ja.md)**: 先に公式ログインを完了し、Codex アプリ拡張を有効化して、公式ログイン状態を `auth.json` に残したままモデル通信をサードパーティ API へ切り替える手順を説明します。
+- **[Codex で DeepSeek を使う: ローカルルーティング実践ガイド](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-ja.md)**: Codex プロバイダーの追加、ローカルルーティングの有効化、リクエスト転送の確認までを説明します。
+- **[Codex プロバイダーの追加: Chat Completions ルーティングとモデルマッピング](/ja/docs?section=providers&item=add)**: 「ローカルルーティングが必要」設定、モデルマッピングテーブル、思考能力の設定を説明します。
+- **[ローカルプロキシサービス](/ja/docs?section=proxy&item=service)** と **[ローカルルーティング](/ja/docs?section=proxy&item=routing)**: プロキシサービス、live 設定のテイクオーバー、関連するリスク注意事項を説明します。
+
+> [!WARNING]
+>
+> ## 唯一の公式チャネル（必ずお読みください）
+>
+> CC Switch は**完全に無料・オープンソース**のデスクトップアプリで、**ユーザーから料金を徴収することはありません**。本ソフトウェアは下記の公式チャネルからのみ入手してください：
+>
+> | チャネル     | 唯一の公式                                                                     |
+> | ------------ | ------------------------------------------------------------------------------ |
+> | 公式サイト   | **[ccswitch.io](https://ccswitch.io)**                                         |
+> | ソースコード | **[github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)** |
+> | ダウンロード | **[GitHub Releases](https://github.com/farion1231/cc-switch/releases)**        |
+> | 作者         | **[@farion1231](https://github.com/farion1231)**                               |
+> | 偽サイト通報 | **[GitHub Issues](https://github.com/farion1231/cc-switch/issues)**            |
+>
+> **料金請求・チャージ・認証情報の提供を求める「CC Switch」サイトやクライアントはすべて偽物です。** 支払いを誘導された場合は直ちに操作を中止し、GitHub Issues からご報告ください。
+
+### 概要
+
+CC Switch v3.16.1 は v3.16.0 に続く Codex 安定性パッチです。v3.16.0 では Chat Completions ルーティングによってサードパーティ Codex プロバイダーを一等市民にしました。本リリースでは、実際の利用で見つかったいくつかの高リスクなエッジケースを中心に修正しています。具体的には、サードパーティプロバイダーの切り替えやローカルルーティングのテイクオーバー中に公式 ChatGPT / Codex OAuth ログイン状態が上書きされる問題、live バックフィル・ホットスイッチ・テイクオーバー解除時の復元・現在のプロバイダー編集で Codex モデルカタログが空になる問題、そして Chat Completions 上流パスで Codex の `tool_search`、プラグイン / コネクタの namespace ツール、カスタムツールが Responses イベントへ完全には復元されない問題です。
+
+本リリースではローカルルーティングのテイクオーバー所有権判定も強化しました。プロバイダー切り替えとテイクオーバートグルはアプリごとに直列実行されます。live ファイルがプロキシ管理下にあるかを判定するとき、遅延しがちな `enabled` 状態やプロキシサービスの起動状態だけに頼らず、バックアップと live 内のプロキシプレースホルダーも確認します。これにより、テイクオーバー直後、プロキシの一時停止中、ホットスイッチ中に、通常の live 書き込みがプロキシ管理設定を上書きしてしまうことを防ぎます。
+
+### ハイライト
+
+- **Codex OAuth とサードパーティプロバイダー切り替えをより安全に**: 公式認証を保持する任意設定を追加しました。有効化すると、サードパーティプロバイダーの token は `config.toml` に書き込まれ、公式 ChatGPT / Codex OAuth ログインは `auth.json` に残ります。
+- **Codex モデルカタログが静かに消えないように**: `modelCatalog` はデータベースを信頼できる情報源として扱い、live バックフィル、プロバイダー切り替え、テイクオーバー解除時の復元、プロバイダー編集で、カタログ投影を失った live 設定によりデータベースが上書きされることを避けます。
+- **Codex Chat ツール / プラグインルーティングを復元**: Chat Completions 上流から返る `tool_search`、読み込み済み namespace ツール、カスタムツールを Codex Responses 形態へ再マッピングします。ストリーミングのカスタムツールはネイティブの `response.custom_tool_call_input.*` イベントを出力します。
+- **ローカルルーティングのテイクオーバーとホットスイッチがより安定**: プロバイダー切り替えとテイクオーバートグルはアプリごとに直列化されます。ホットスイッチ時は Codex live 内のプロバイダー表示情報を更新しつつ、endpoint は引き続きローカルプロキシを指します。
+- **診断とプラットフォーム互換性の修正**: Codex プロキシエラーがより豊富な文脈を返すようになりました。Codex CLI のモデルテンプレート探索はより多くのプラットフォームに対応し、静的な GPT-5.5 テンプレートのフォールバックを備えます。Windows のツールバージョン検出では、ローカライズ出力とコマンド引用符の問題を修正しました。
+
+### 追加機能
+
+#### Codex 公式認証保持設定
+
+サードパーティ Codex プロバイダーへ切り替えるときに、公式 ChatGPT / Codex OAuth ログイン状態を保持する任意設定を追加しました。有効化すると、CC Switch はサードパーティプロバイダーの API key を Codex `config.toml` の provider-scoped `experimental_bearer_token` に保存し、`auth.json` 内の公式ログインキャッシュを上書きしません。
+
+一部のユーザーはこの機能によって設定ファイルの書き込み方式が変わることを望んでいないため、この設定はデフォルトでオフです。v3.16.0 以前の互換動作を維持します。公式 Codex ログインとサードパーティプロバイダーを同時に使いたい場合は、「設定 → Codex アプリ拡張」で手動で有効化できます。
+
+#### Codex DeepSeek ルーティングガイド
+
+Codex DeepSeek ルーティングガイドを中国語 / 英語 / 日本語で追加しました。プロバイダーのルーティング要件、DeepSeek Codex プロバイダーフォームの設定、ローカルルーティングのテイクオーバー手順をスクリーンショット付きで説明します。
+
+### 変更
+
+#### Codex 認証保持は opt-in に変更
+
+公式認証保持設定はデフォルトでオフです。これにより、サードパーティ Codex プロバイダーの切り替えは従来の動作を維持し、ユーザーが気づかないうちに `auth.json` / `config.toml` の書き込み方式が変わることを避けます。
+
+#### Codex プロバイダー切り替え後に再起動を案内
+
+Codex はモデルカタログと一部の設定をクライアント起動時に読み込みます。Codex プロバイダーの切り替えに成功した後、UI は Codex の再起動を案内し、モデルカタログと設定変更が実際に反映されるようにします。
+
+#### プロバイダー切り替えとテイクオーバートグルを直列化
+
+Codex / Claude / Gemini のプロバイダー切り替えとローカルルーティングのテイクオーバートグルは、アプリごとのロックを共有するようになりました。これにより、2 つの処理が同時に live 設定とバックアップを書き換えることを避けます。live がプロキシ管理下にあるかの判定も、プロキシサービスが起動しているかだけでなく、live バックアップと `PROXY_MANAGED` プレースホルダーを優先して確認します。
+
+#### Codex ホットスイッチで表示情報を更新
+
+ローカルルーティングのテイクオーバー中に Codex プロバイダーをホットスイッチすると、CC Switch は live 設定内の provider id、モデル、表示名を更新し、Codex クライアントのメニューが現在のプロバイダーに追従するようにします。同時に base URL はローカルプロキシアドレスのまま維持し、実際の上流 endpoint が live ファイルへ戻ってしまうことを防ぎます。
+
+### 修正
+
+#### Codex テイクオーバー中の編集ダイアログが live OAuth を表示する問題
+
+Codex がローカルルーティングのテイクオーバー状態にあるとき、live の `auth.json` / `config.toml` はプロキシによって一時的に書き換えられています。この live を読み続けると、現在のプロバイダー編集時にプロキシプレースホルダーや公式 OAuth ログインをプロバイダー設定として誤表示してしまいます。現在の編集ダイアログは、ここに表示されるのがプロキシ管理下の live ファイルではなく、データベースに保存されたプロバイダー設定であることを明示します。プロキシサービスが一時停止していても、そのアプリがテイクオーバー状態であればテイクオーバーとして扱います。
+
+#### Codex OAuth がテイクオーバー中に消去または上書きされる問題
+
+公式 ChatGPT / Codex OAuth `auth.json` を消去または上書きする可能性があった複数の preserve-mode テイクオーバーパスを修正しました。テイクオーバー判定は `config.toml` 内の `PROXY_MANAGED` を認識し、クリーンアップはプロキシプレースホルダー token だけを削除します。サードパーティプロバイダーが official と誤分類されても、公式 auth の上書きパスには入りません。プロバイダー同期と切り替えでは、live バックアップとプレースホルダーをテイクオーバー所有権のシグナルとして扱い、テイクオーバー直後やプロキシ一時停止中に通常の live 書き込みがプロキシ設定を上書きすることを防ぎます。
+
+#### Codex モデルカタログのデータ消失
+
+live バックフィル、現在のプロバイダー編集、プロバイダー切り替え、テイクオーバー解除時の復元などで `modelCatalog` が空になる問題を修正しました。スナップショットバックアップは既存の `model_catalog_json` ポインターを保持します。プロバイダーから再構築されるバックアップは、データベースの信頼できる情報源からカタログ投影を再生成します。現在のプロバイダー編集時は、投影を失っている可能性のある live の逆解析結果ではなく、データベース内のモデルカタログを優先します。
+
+また、プロバイダー切り替え時には生成済みの Codex モデルカタログ JSON を常に更新するようになりました（[#3360](https://github.com/farion1231/cc-switch/pull/3360)、[@Postroggy](https://github.com/Postroggy) に感謝）。
+
+#### Codex Chat ツール、プラグイン、カスタムツールの復元
+
+サードパーティ Codex プロバイダーが Chat Completions ルーティングを通るとき、`tool_search`、読み込み済みの MCP / connector namespace ツール、カスタムツールを Codex Responses 形態へ完全に復元できない問題を修正しました。非ストリーミングとストリーミングの Chat レスポンスは、元の Responses リクエストに基づいて正しいツール種別、namespace、call id、引数を復元します。カスタムツールのストリーミング出力は、ネイティブの `response.custom_tool_call_input.delta` と `response.custom_tool_call_input.done` イベントを発行します。
+
+#### Codex プロキシエラー診断の拡充
+
+Codex の転送に失敗したとき、provider、model、endpoint、上流 HTTP ステータス、安定した `cc_switch_*` エラーコード、正規化された HTTP ステータスを含む JSON エラーを返すようになりました。これにより、どのプロバイダー、どの endpoint、どの上流エラーが原因なのかを追いやすくなります。
+
+#### Codex ネイティブ残高 / Coding Plan の認証情報検索
+
+ネイティブ残高と Coding Plan の照会時に、別アプリの認証情報を誤って使う問題を修正しました。各 app は自分自身のプロバイダー認証情報を解析し、別のアプリ面の認証前提を照会フローへ持ち込まなくなりました（[#3355](https://github.com/farion1231/cc-switch/pull/3355)、[@SiskonEmilia](https://github.com/SiskonEmilia) に感謝）。
+
+#### Codex CLI 探索とモデルカタログテンプレートのフォールバック
+
+サードパーティ Codex モデルカタログ投影における Codex CLI の探索パスが狭すぎる問題を修正しました。バックエンドは複数プラットフォームの一般的な Codex CLI インストール場所を探し、それでもテンプレートが見つからない場合は内蔵の GPT-5.5 モデルカタログテンプレートへフォールバックします（[#3382](https://github.com/farion1231/cc-switch/pull/3382)、[@chofuhoyu](https://github.com/chofuhoyu) に感謝）。
+
+#### Claude Desktop Official プロバイダー追加失敗
+
+Claude Desktop Official プロバイダー追加時のエラーを修正しました（[#3405](https://github.com/farion1231/cc-switch/pull/3405)、[@Eunknight](https://github.com/Eunknight) に感謝）。
+
+#### Kimi / Moonshot ツール思考履歴の正規化
+
+Kimi / Moonshot を Anthropic 互換ツール思考履歴 normalizer に追加しました。後続ターンで reasoning と tool-call コンテキストを正しく再生できるようになり、履歴メッセージの形が上流要件に合わず失敗する問題を避けます（[#3377](https://github.com/farion1231/cc-switch/pull/3377)、[@Neon-Wang](https://github.com/Neon-Wang) に感謝）。
+
+#### Windows ツールバージョン検出
+
+Windows で `.cmd` / `.bat` のバージョンコマンドに誤って引用符が付く問題と、ローカライズされたコマンド出力が文字化けしてデコードされる問題を修正しました。以前は、実行可能なツールが「インストール済みだが実行できない」と表示されることがありました。
+
+### アップグレード時の注意
+
+#### 公式 OAuth 保持は手動で有効化が必要
+
+公式 ChatGPT / Codex OAuth ログインを `auth.json` に長期保持しつつ、サードパーティ Codex プロバイダーを頻繁に切り替える場合は、設定で Codex 公式認証保持を有効化してください。既存ユーザーの互換動作を維持するため、デフォルトではオフです。
+
+#### モデルマッピング変更後は Codex の再起動が必要
+
+Codex は起動時に `model_catalog_json` を読み込みます。v3.16.1 でモデルカタログが空になる問題は修正されていますが、モデルマッピングテーブルを変更した後は、`/model` メニューを更新するために Codex の再起動が必要です。
+
+#### テイクオーバー中に編集するのは保存済み設定であり live ファイルではありません
+
+ローカルルーティングのテイクオーバーを有効化すると、live の `auth.json` / `config.toml` は一時的に CC Switch プロキシを指します。このときプロバイダー編集で表示されるのは、データベースに保存されたプロバイダー設定です。これは期待される動作です。テイクオーバーを無効化すると、CC Switch はバックアップまたはデータベースの信頼できる情報源から live 設定を復元します。
+
+### リスク通知
+
+本リリースは、リバースプロキシ系機能に関する以前のリスク通知を引き続き適用します。
+
+**Codex OAuth リバースプロキシ**: ChatGPT サブスクリプションの Codex OAuth をリバースプロキシ経由で使用すると、OpenAI の利用規約に違反する可能性があります。詳細は [v3.13.0 release notes](v3.13.0-ja.md#️-リスクに関する注意事項) を参照してください。
+
+**Codex サードパーティプロバイダー Chat ルーティング**: CC Switch ローカルプロキシで Codex リクエストを変換し、サードパーティプロバイダーへ転送する場合、課金、コンプライアンス、データ保持に関する制約はプロバイダーごとに異なります。利用前に対象プロバイダーの利用規約を確認してください。
+
+**Claude Desktop サードパーティプロバイダープロキシ切り替え**: CC Switch 内蔵のプロキシゲートウェイで Claude Desktop のリクエストをサードパーティプロバイダーへ転送する場合も、対象プロバイダーの課金、コンプライアンス、データ保持に関する規約に従う必要があります。
+
+上記機能を有効化したユーザーは、関連するリスクを自ら負うものとします。CC Switch は、これらの機能の利用によって発生したアカウント制限、警告、サービス停止について責任を負いません。
+
+### 謝辞
+
+v3.16.1 で修正を届けてくださった以下のコントリビューターに感謝します：
+
+- [#3360](https://github.com/farion1231/cc-switch/pull/3360): Codex プロバイダー切り替え時にモデルカタログ JSON を常に更新、[@Postroggy](https://github.com/Postroggy) に感謝。
+- [#3355](https://github.com/farion1231/cc-switch/pull/3355): ネイティブ残高 / Coding Plan 照会の認証情報を app ごとに解析、[@SiskonEmilia](https://github.com/SiskonEmilia) に感謝。
+- [#3405](https://github.com/farion1231/cc-switch/pull/3405): Claude Desktop Official プロバイダー追加エラーを修正、[@Eunknight](https://github.com/Eunknight) に感謝。
+- [#3382](https://github.com/farion1231/cc-switch/pull/3382): Codex CLI の複数プラットフォーム探索と GPT-5.5 モデルテンプレートフォールバック、[@chofuhoyu](https://github.com/chofuhoyu) に感謝。
+- [#3377](https://github.com/farion1231/cc-switch/pull/3377): Kimi / Moonshot ツール思考履歴の正規化、[@Neon-Wang](https://github.com/Neon-Wang) に感謝。
+
+v3.16.0 リリース後に Codex OAuth、モデルカタログ、ローカルルーティングのテイクオーバー、Chat Completions ツール呼び出しの問題を報告してくださったすべてのユーザーにも感謝します。今回の多くの修正は、実際の利用シーンから得られた再現情報に基づいています。
+
+### ダウンロードとインストール
+
+[Releases](https://github.com/farion1231/cc-switch/releases/latest) から、お使いのシステムに対応するビルドをダウンロードしてください。
+
+#### システム要件
+
+| システム | 最低バージョン           | アーキテクチャ                    |
+| -------- | ------------------------ | --------------------------------- |
+| Windows  | Windows 10 以降          | x64                               |
+| macOS    | macOS 12 (Monterey) 以降 | Intel (x64) / Apple Silicon (arm64) |
+| Linux    | 下表を参照               | x64 / ARM64                       |
+
+#### Windows
+
+| ファイル                                 | 説明                                                |
+| ---------------------------------------- | --------------------------------------------------- |
+| `CC-Switch-v3.16.1-Windows.msi`          | **推奨** - 自動更新対応の MSI インストーラー        |
+| `CC-Switch-v3.16.1-Windows-Portable.zip` | ポータブル版、展開してそのまま実行できます          |
+
+#### macOS
+
+| ファイル                         | 説明                                                    |
+| -------------------------------- | ------------------------------------------------------- |
+| `CC-Switch-v3.16.1-macOS.dmg`    | **推奨** - DMG インストーラー、Applications へドラッグ |
+| `CC-Switch-v3.16.1-macOS.zip`    | 展開して Applications へドラッグ、Universal Binary     |
+| `CC-Switch-v3.16.1-macOS.tar.gz` | Homebrew インストールと自動更新用                      |
+
+Homebrew インストール：
+
+```bash
+brew install --cask cc-switch
+```
+
+更新：
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+Linux アセットは **x86_64** と **ARM64**（`aarch64`）の両方を提供します。ファイル名にアーキテクチャ識別子が含まれているため、マシンの `uname -m` 出力に合わせて選択してください：
+
+- `CC-Switch-v3.16.1-Linux-x86_64.AppImage` / `.deb` / `.rpm`
+- `CC-Switch-v3.16.1-Linux-arm64.AppImage` / `.deb` / `.rpm`
+
+| ディストリビューション                  | 推奨形式    | インストール方法                                                       |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` または `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` または `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                |
+| Arch Linux / Manjaro                    | `.AppImage` | 実行権限を付与して直接起動、または AUR を使用                          |
+| その他 / 不明                           | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`              |
+
+## [3.16.0] - 2026-05-29
+
+> Codex 向けに Chat Completions → Responses フォーマット変換を追加（Codex で DeepSeek・Kimi・GLM が使えるようになりました！）、Codex プロバイダーの身元と履歴を統一、アプリ管理パネルの全方位強化、パートナープリセットの拡張、デフォルトモデル / 価格マトリクスを GPT-5.5 と Claude Opus 4.8 にアップグレード、プロキシ / フォーマット変換のロバスト性強化
+
+### 利用ガイド
+
+本リリースの主役となる 2 つの機能は、**Codex サードパーティプロバイダーの Chat Completions ルーティング**と**アプリ内の管理対象 CLI ツール管理**です。OpenAI Chat プロトコルにしか対応していないプロバイダー（DeepSeek、Kimi、MiniMax など）を Codex で直接使いたい場合、またはアプリ内で CLI ツールの一括インストール / アップグレードをしたい場合は、まずこちらをご覧ください：
+
+- **[Codex で DeepSeek を使う: ローカルルーティング実践ガイド](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-ja.md)** —— DeepSeek 内蔵プリセットを例に、Codex プロバイダーの追加、ローカルルーティングの有効化、リクエスト転送の確認までを説明します。
+- **[Codex プロバイダーの追加: Chat Completions ルーティングとモデルマッピング](/ja/docs?section=providers&item=add)** —— 「ローカルルーティングが必要」トグル、モデルマッピングテーブル、思考能力（reasoning）の自動判別までの一連の流れを説明しています。
+- **[設定 → バージョン情報: 管理対象 CLI ツール管理](/ja/docs?section=getting-started&item=settings)** —— バージョン検出、個別アップグレード / 全体アップグレード、競合診断、インストール元にアンカーされたアップグレードコマンドを説明しています。
+
+> [!WARNING]
+>
+> ## 唯一の公式チャネル（必ずお読みください）
+>
+> CC Switch は**完全に無料・オープンソース**のデスクトップアプリで、**ユーザーから料金を徴収することはありません**。最近、CC Switch の名を騙って課金を要求したり認証情報を収集する偽サイトが複数確認されており、一部のユーザーには既に金銭的被害が発生しています。本ソフトウェアは下記の公式チャネルからのみ入手してください：
+>
+> | チャネル     | 唯一の公式                                                                     |
+> | ------------ | ------------------------------------------------------------------------------ |
+> | 公式サイト   | **[ccswitch.io](https://ccswitch.io)**                                         |
+> | ソースコード | **[github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)** |
+> | ダウンロード | **[GitHub Releases](https://github.com/farion1231/cc-switch/releases)**        |
+> | 作者         | **[@farion1231](https://github.com/farion1231)**                               |
+> | 偽サイト通報 | **[GitHub Issues](https://github.com/farion1231/cc-switch/issues)**            |
+>
+> **料金請求・チャージ・認証情報の提供を求める「CC Switch」サイトやクライアントはすべて偽物です。** 支払いを誘導された場合は、直ちに取引を中止し、偽サイトを速やかに削除できるよう GitHub Issues からご報告ください。
+
+### 概要
+
+CC Switch v3.16.0 の v3.15.0 以降の開発のコアは、**サードパーティ Codex プロバイダーを Chat Completions ルーティングによって一等市民へ昇格させること**です。Codex はネイティブには OpenAI Responses API と GPT 系モデルしか認識しませんが、本リリースでは CC Switch のローカルプロキシが Codex の送出する Responses リクエストを Chat Completions に変換し、JSON と SSE のストリーミングレスポンスを Responses 形態へ再構築します。その道中で `reasoning_content` / インライン `<think>` ブロック / ストリーミング推論サマリー / ツール呼び出し / `previous_response_id` の継続を保持し、エラーエンベロープを正規化し、Stream Check で Chat 形式プロバイダーを正しくプローブします。あわせて明示的なモデルカタログ付きの 22 個の Chat ルーティングプリセット（DeepSeek、Zhipu GLM、Kimi、MiniMax、StepFun、Baidu Qianfan、Bailian、ModelScope、Longcat、BaiLing、Xiaomi MiMo、Volcengine Agentplan、BytePlus、DouBao Seed、SiliconFlow、Novita AI、Nvidia など）を出荷します。
+
+Codex サードパーティプロバイダーの**身元と履歴**は、本リリースで統一・堅牢化されました: すべてのサードパーティプロバイダーが安定した `custom` model-provider バケットに正規化され、過去の JSONL セッションと `state_5.sqlite` のスレッドテーブルを書き換える一回限りのデバイスマイグレーション（オリジナルは `~/.cc-switch/backups/` 配下にバックアップ）を提供することで、プロバイダー id の変更によって過去のセッションが消えたように見える問題を防ぎます。あわせて、live 読み取り / 切り替えの際に OAuth ログイン状態、ユーザーが選択したカタログモデル、ユーザー定義のプロバイダー id が上書きされる問題も修正しました。
+
+本リリースではさらに、**アプリ内蔵の受託 CLI ツールライフサイクル**を追加しました: 設定の「バージョン情報」タブが Claude / Codex / Gemini / OpenCode / OpenClaw / Hermes のツール管理パネルに昇格し、サイレントインストール / 更新、全体アップグレード、競合診断、インストール元を考慮したアンカー型アップグレード、WSL の取り扱い、「インストール済みだが実行できない」状態の可視化に対応します。
+
+プロバイダーエコシステムとモデルマトリクスも並行してリフレッシュされました: APIKEY.FUN、APINebula、AtlasCloud、SudoCode、Xiaomi MiMo Token Plan、Claude Desktop 公式プリセットを追加; 各アプリのパートナーリンクとデフォルトモデル / 価格をリフレッシュ; デフォルトの Claude Opus ラインを **4.8** に、該当箇所の GPT デフォルトを **5.5** にアップグレード。さらに、Usage の可観測性、繁体字中国語ローカライズ、ドキュメント、プロキシ / フォーマット変換のロバスト性についても多くの改善と修正を行いました。
+
+### ハイライト
+
+- **Codex Chat Completions ルーティング**: Codex プロバイダーを OpenAI 互換の Chat Completions 上流で提供できるようになりました。CC Switch は Codex の Responses リクエストを Chat Completions に変換し、JSON と SSE レスポンスを Responses 形態へ再構築し、reasoning / `<think>` / ツール呼び出し状態を保持し、エラーエンベロープを正規化し、Stream Check で Chat 形式プロバイダーを正しくプローブします
+- **Codex サードパーティプロバイダーの状態を統一しより安全に**: サードパーティ Codex プロバイダーは安定した `custom` model-provider バケットを共有するようになり、過去の JSONL セッションと `state_5.sqlite` スレッドの一回限りのマイグレーションに加え、live 読み取り / 切り替え時に OAuth ログイン状態、ユーザー選択のカタログモデル、ユーザー定義のプロバイダー id を保持する修正を実施
+- **受託 CLI ツール管理**: 「バージョン情報」ページが Claude / Codex / Gemini / OpenCode / OpenClaw / Hermes のツール管理パネルに昇格し、インストール / 更新アクション、全体アップグレード、競合診断、インストール元にアンカーしたアップグレード、WSL の取り扱い、「インストール済みだが実行できない」状態の可視化を搭載
+- **プロバイダーエコシステムとモデルマトリクスのリフレッシュ**: APIKEY.FUN、APINebula、AtlasCloud、SudoCode、Xiaomi MiMo Token Plan、Claude Desktop 公式プリセットを追加; 各アプリのパートナーリンクとデフォルトモデル / 価格をリフレッシュ; デフォルトの Claude Opus を 4.8 に、該当箇所の GPT デフォルトを 5.5 にアップグレード
+- **Usage とドキュメントの磨き込み**: Usage ダッシュボードがログ書き込み時に即座に反応して更新、カスタム usage スクリプトのサマリーと subagent セッションログの計上を修正、繁体字中国語 UI ローカライズが着地、ドイツ語 README と拡充された Claude Desktop / Codex Chat / ツール管理マニュアルを追加
+- **プロキシと変換のハードニング**: Codex Chat の推論 / キャッシュ / usage のエッジケース、DeepSeek Anthropic ツール思考履歴、Claude 互換の空 `tool_calls` ストリーム、受託アカウントのテイクオーバー認証、MiMo 推論出力、Gemini Native ツール呼び出しの再生、いくつかのパニックしやすいプロキシパスを修正
+
+### 追加機能
+
+#### Codex Chat Completions ルーティング
+
+Codex プロバイダーを、OpenAI Chat Completions API しか話せない上流で提供できるようになりました。CC Switch のローカルプロキシは Codex の送出する Responses リクエストを Chat Completions に変換し、Chat レスポンス（JSON と SSE の両方）を Responses 形態へ再構築します。その際、`reasoning_content`、インライン `<think>` ブロック、ストリーミング推論サマリー、ツール呼び出し、`previous_response_id` の継続を保持します。有界の Codex Chat 履歴キャッシュが、ツール出力の前に対応するツール呼び出しを復元します。
+
+> 💡 [@EldenPdx](https://github.com/EldenPdx) の PR [#2804](https://github.com/farion1231/cc-switch/pull/2804) に特別な感謝を: 本機能の Chat ↔ Responses フォーマット変換の実装は、彼の PR の実装を参考にしています。
+
+#### Chat ルーティング対応の 22 個の Codex サードパーティプロバイダープリセット
+
+主要な中国 / アジア系プロバイダー向けに、明示的なモデルカタログ付きで Chat Completions ルーティングを有効化しました —— DeepSeek、Zhipu GLM（+ 英語版）、Kimi、MiniMax（+ 英語版）、StepFun（+ 英語版）、Baidu Qianfan Coding Plan、Bailian、ModelScope、Longcat、BaiLing、Xiaomi MiMo（+ Token Plan）、Volcengine Agentplan、BytePlus、DouBao Seed、SiliconFlow（+ 英語版）、Novita AI、Nvidia。各プリセットは自身のコンテキストウィンドウを宣言するため、UI がモデルマッピング行のサイズを決定できます。
+
+#### Codex モデルマッピングテーブル
+
+Codex プロバイダーフォームがモデルカタログ（行ごとに モデル + 表示名 + コンテキストウィンドウ）を公開するようになりました。これは上流モデルリストの唯一の信頼できる情報源であり、`~/.codex/cc-switch-model-catalog.json` に投影されます。
+
+#### Stream Check の Codex Chat プロバイダー対応
+
+Stream Check は Chat 形式の Codex プロバイダーに対して、`/v1/responses` ではなく Chat 形態のボディで `/chat/completions` をプローブするようになりました。また URL のフォールバック順序を本番の `CodexAdapter` と揃え（origin のみの base URL はまず `/v1/<endpoint>` を叩く）、裸のパスでの 404 以外のエラーが、正常に動作しているプロバイダーをダウンと誤判定しなくなりました。
+
+#### Codex Chat 思考能力（Reasoning）の自動判別
+
+Codex プロバイダーが Chat Completions ルーティング経由で提供される場合、CC Switch は上流の推論インターフェースを名前、base URL、モデル名から**自動判別**し、正しい思考パラメータ（`thinking:{type}`、`enable_thinking`、`reasoning_split`、トップレベルの `reasoning_effort`、または OpenRouter のネイティブ `reasoning:{effort}` オブジェクト）を手動設定なしで注入します。アグリゲーター / ホスティングプラットフォーム（OpenRouter、SiliconFlow）は**プラットフォーム優先**でマッチします。同じモデルでもプラットフォームによって異なる推論コントロールを公開する場合があるためです。思考の オン / オフ スイッチしか公開しないプロバイダー（Kimi、GLM、Qwen、MiniMax、MiMo、SiliconFlow）は、未対応のフィールドを転送する代わりに effort の*レベル*を破棄します —— そのため Codex の推論 effort を変更してもこれらには効果がありません —— 一方、本物の effort 階層を持つプロバイダー（DeepSeek、OpenRouter、および StepFun の `step-3.5-flash-2603` のみ）はレベルを透過させます。OpenRouter は特にネイティブ `reasoning:{effort}` オブジェクトを使用し、`max` を `xhigh` にクランプし（その enum に `max` はない）、推論をオフにできるよう明示的に `effort:"none"` を転送します。
+
+#### Codex Goal Mode とリモートコンパクション制御
+
+Codex の設定編集で、サードパーティプロバイダー向けに Goal Mode トグルとリモートコンパクション（Remote Compaction）トグルを公開するようになりました; 新規 Codex テンプレートはデフォルトで `disable_response_storage = true` としつつ、明示的な goal サポートも許可します。
+
+#### Xiaomi MiMo Token Plan プリセット
+
+公式ドキュメントに準拠した仕様で Xiaomi MiMo Token Plan プリセットを追加しました (#2803, 感謝 @BlueOcean223)。
+
+#### Claude Desktop 公式プリセット
+
+ネイティブの Claude Desktop ログインを復元する Claude Desktop 公式プリセットと、ローカライズされた Claude Desktop ユーザーガイド（en / zh / ja）を追加しました。
+
+#### 受託 CLI ツールライフサイクル
+
+受託 CLI ツール向けに、サイレントインストール / 更新コマンド、最新バージョンチェック、ツール単位およびバッチアクション、全体アップグレード、そして PATH、Homebrew、npm、pnpm、bun、volta、fnm、nvm、scoop、WinGet、Windows ネイティブパス、WSL をまたいだ複数インストールの診断を追加しました。
+
+#### インストール元を考慮したツール診断
+
+設定 / バージョン情報の画面で、競合するツールインストールを診断し、各パスの具体的なインストール元とバージョンを表示し、実際のインストール元にアンカーされたバックエンド計画のアップグレードコマンドを生成できるようになりました。
+
+#### リアルタイム Usage 更新
+
+バックエンドは、プロキシログ、セッションログ同期、ロールアップが usage データを書き込んだ際に `usage-log-recorded` を発行するようになりました; Usage ダッシュボードはそのイベントを購読し、次のポーリング間隔を待たずに即座にクエリを無効化します (#3027, 感謝 @in30mn1a)。
+
+#### 繁体字中国語ローカライズ
+
+`zh-TW` の UI ローカライズと設定の言語オプションを追加しました (#3093, 感謝 @LaiYueTing)。
+
+#### ドイツ語 README
+
+`README_DE.md` を追加し、既存の README 言語スイッチャーからリンクしました (#2994, 感謝 @flitzrrr)。
+
+#### 新しいパートナープリセット
+
+対応する各アプリ面に APIKEY.FUN、APINebula、AtlasCloud、SudoCode のパートナープリセットを、パートナー文面、アイコン、README エントリとともに追加しました。
+
+### 変更
+
+#### Codex サードパーティプロバイダーを "custom" 履歴バケットに統一
+
+Codex は復元履歴を `model_provider` でフィルタリングするため、プロバイダー固有の id 間を切り替えると過去のセッションが消えたように見えていました。すべてのサードパーティプロバイダーは単一の安定した `custom` バケットに正規化されるようになり（`openai` / `ollama` のような予約済みの組み込み id は保持）、過去の JSONL セッションと `state_5.sqlite` のスレッドテーブルを書き換え、オリジナルを `~/.cc-switch/backups/codex-history-provider-migration-v1/` 配下にバックアップする一回限りのデバイスマイグレーションを伴います。
+
+#### Codex プロバイダーフォームの簡素化
+
+Codex フォームから API Format セレクターを削除しました（`wire_api` は常に `responses` であり、セレクターはプロトコルを変更できるかのように誤解を招くため）; モデルマッピングテーブルが唯一の信頼できる情報源となり、隠れたデフォルトエントリはなくなりました。`model_catalog_json` は起動時に読み込まれるため、カタログ変更後は Codex の再起動が必要である旨をフォームに明記しています。残るのは「ローカルルーティングが必要」トグルのみです。
+
+#### Codex ローカルルーティングトグルのヒント書き直し
+
+OFF / ON のヒントを、シナリオの説明ではなくアクションのガイダンス（いつ有効化すべきか）として再構成し、zh / en / ja で同期しました。
+
+#### Codex Live 設定の保持
+
+Codex の live 設定読み取りがユーザーの `model_provider` フィールドを強制的に書き換えなくなり、プロバイダースコープの `experimental_bearer_token` 処理がサードパーティプロバイダー間の切り替え時に OAuth ログイン状態を保持するようになりました。
+
+#### ツールのインストール / アップグレード戦略
+
+受託ツールのインストールは、可能な場合は公式のネイティブインストーラーを優先し、適切な場合はパッケージマネージャーにフォールバックし、互換性のあるツールではまず self-update を実行し、アップグレードを検出されたインストール元にアンカーし、作業中は重複するバッチアクションをロックするようになりました。
+
+#### 「バージョン情報」ページがツール管理に
+
+「バージョン情報」設定ページが、インストール済み / 最新バージョン、インストールおよび更新アクション、競合診断、WSL シェル設定、壊れている / 実行できないツールのより明確なステータスを表示するようになりました。
+
+#### デフォルトモデルと価格のリフレッシュ
+
+デフォルトの Claude Opus モデルを 4.8 にアップグレードし、該当箇所の GPT ベースのプリセットとテンプレートを GPT-5.5 に移行し、価格シードをリフレッシュし、Claude Desktop のモデルマッピングを Claude Code の三ロール階層に揃え、OpenCode の Go プリセットを古いモデルサフィックスを落とすようリネームしました。
+
+#### パートナーリンクのリフレッシュ
+
+ShengSuanYun の紹介リンク、Atlas Cloud の UTM リンク、各 README ロケールおよびプロバイダーメタデータのパートナー文面を更新しました。
+
+#### Homebrew 公式 Cask インストール
+
+CC Switch が公式 Homebrew リポジトリに収録されたため、インストールを `brew install --cask cc-switch` に簡素化しました; 個人 tap の要件はすべての README から削除しました。
+
+#### 共有フロントエンドユーティリティ
+
+JSON stringify / parse によるディープコピーのパターンを共有の `deepClone` ヘルパーに置き換え、共有の `useTauriEvent` フックを抽出しました (#3140, 感謝 @ChongBiaoZhang)。
+
+### 修正
+
+#### Codex Chat エラーレスポンスを Responses エンベロープに変換
+
+Codex Chat → Responses ブリッジは以前、上流のエラーボディをそのまま透過させていたため、Codex クライアントが MiniMax の `base_resp`、生の OpenAI Chat エラー、プレーンテキスト / HTML のエラーページを認識できませんでした。エラーは標準の `{error: {message, type, code, param}}` エンベロープに整形され、元の HTTP ステータスが保持されるようになりました; 非 JSON ボディはラップされ、UTF-8 文字境界で 1KB に切り詰められます。また、書き換え後の JSON ボディに重複する `Content-Type` ヘッダーを出力していた既存の append-vs-insert バグも修正しました。
+
+#### Codex のストリーム中間の system メッセージを折りたたみ
+
+MiniMax の OpenAI 互換エンドポイントは、先頭以外の `system` メッセージを厳格に拒否します（エラー 2013）。すべての `system` 断片は単一の先頭メッセージに折りたたまれるようになりました（元の順序で結合）。寛容なバックエンドに対しても損失なく行われます。
+
+#### 再起動後に Codex モデルカタログが消える問題
+
+アクティブな Codex プロバイダーを編集すると `modelCatalog` を省略した live 読み取りがトリガーされ、その後の保存がユーザー設定のモデルマッピングを無言で破壊していました。live 読み取りはディスク上のカタログ投影を逆解析し、保存パスが書き込むのと同じ形態をラウンドトリップするようになりました。
+
+#### Codex モデルカタログの無限レンダリングループ
+
+カタログテーブルとその親 state の間の双方向同期サイクルを断ち切りました。これはエントリの追加や編集時に深刻な UI のジッターを引き起こしていました。
+
+#### Codex Chat がユーザー選択のカタログモデルを保持
+
+クライアントがカタログから選択したモデル（例: `/model` 経由）が、`config.toml` のデフォルトモデルによって上書きされなくなりました。
+
+#### Codex Chat の推論とキャッシュの安定性
+
+Codex が `previous_response_id` を省略または書き換える際の一意な call-id フォールバックを復元し、`previous_response_id` からキャッシュの同一性を導出するのをやめ、ツール変換でパース可能な JSON 文字列ペイロードを正規化して安定したプレフィックスキャッシュ再利用を実現しました。
+
+#### Codex Chat のストリーミング usage を復旧
+
+Responses → Chat 変換が、リクエストがストリーミングの場合に `stream_options.include_usage` を注入する（クライアント提供の `stream_options` にマージ）ようになり、Kimi や MiniMax のような OpenAI 互換上流が末尾の usage チャンクを再び発行するようになりました。以前は、これらのストリーミングのトークン / コスト / キャッシュ統計が Codex Chat パスでゼロとして記録されていました。
+
+#### Codex Chat ツール呼び出しの推論バックフィル
+
+Kimi/Moonshot や DeepSeek のような思考モデルは、空でない `reasoning_content` を伴わない `tool_calls` を持つ assistant メッセージを拒否します。ターンをまたいだ履歴復元が失敗した場合（プロキシ再起動、曖昧な `call_id`、または上流の推論がないターン）、最終パスでプレースホルダーの `reasoning_content` をバックフィルするようになりました —— 本物の末尾推論が先に付加されます —— そのためリクエストが `reasoning_content is missing in assistant tool call message` で失敗しなくなりました。
+
+#### 受託アカウントの Claude テイクオーバー認証
+
+受託アカウントのプロバイダー（GitHub Copilot / Codex OAuth）は、Claude Live 設定をテイクオーバーする際にトークン環境変数キーを破棄し、`ANTHROPIC_API_KEY` プレースホルダーのみを書き込むようになりました。さらに、`PROXY_MANAGED` プレースホルダーを上流に送信するのを拒否するアウトバウンドガードを備えます。
+
+#### テイクオーバー中の Claude Desktop プロファイル同期
+
+プロキシテイクオーバー中に Claude Desktop プロファイルデータが同期されるようになり、モデルルートが Claude Code の三ロール階層に揃い、Cowork egress プロファイルが修正されました (#3157, #3172, 感謝 @MelorTang, @JGSphaela)。
+
+#### 受託アカウントのテイクオーバーモデルフィールド
+
+ローカルルーティングは、受託アカウントにおいて、古いモデル値を持ち回るのではなく、ターゲットプロバイダーからテイクオーバーモデルフィールドを取得するようになりました。
+
+#### DeepSeek Anthropic ツール思考履歴
+
+DeepSeek Anthropic 互換のツール思考履歴を正規化し、後続のターンが不正なメッセージなしで推論 / ツール呼び出しコンテキストを再生できるようにしました (#3203, 感謝 @Q3yp)。
+
+#### Claude 互換のストリーム内の空ツール呼び出し
+
+空の `tool_calls` 配列がブロック状態をリセットしてストリーミングレスポンスを壊す、Claude 互換のストリーミングエッジケースを修正しました (#2915, 感謝 @zhizhuowq)。
+
+#### Claude Code プロキシ向けの MiMo 推論
+
+Claude Code プロキシパスで MiMo の `reasoning_content` サポートを追加しました (#2990, 感謝 @zhangyapu1)。
+
+#### Gemini Native ツール呼び出しのロバスト性
+
+長いマルチターンセッションにおける合成ツール呼び出し ID の `functionResponse.name` 解決（422）と `thought_signature` 再生（400）を修正しました (#2814, 感謝 @Tiancrimson)。
+
+#### セッションログの subagent トークン計上
+
+`collect_jsonl_files()` がこれまで見落とされていた subagent の JSONL ログをスキャンするようになり、subagent のトークン使用量がセッションコストに計上されるようになりました（セッションログモードのみ）(#2821, 感謝 @LaoYueHanNi)。
+
+#### Usage ダッシュボード / 同期の安定性
+
+非 ASCII モデル名による Codex usage 同期パニック、カスタム usage スクリプトのサマリー、usage ロールアップ後のリアルタイム更新の欠落を修正しました (#3027, #3129, 感謝 @in30mn1a, @hanhan3344)。
+
+#### ZhiPu Coding-Plan のクォータ階層の並び順
+
+5 時間バケットの使用率が 0% の場合、ZhiPu の API は `nextResetTime` を省略します; 古い `i64::MAX` センチネルはこれらのエントリを最後にソートしていたため、週次バケットが五時間スロットを誤って占有していました。階層は、`nextResetTime` の欠落が五時間バケットにマップされるようにソートされるようになり、ZhiPu の coding plan でトレイと usage クォータの表示が正しく保たれます。
+
+#### スキルを key でインストール
+
+skills.sh の検索結果からインストールする際に、ディレクトリ名ではなく一意の key を使用するようになり、ディレクトリ名を共有するスキルでも正しいものがインストールされます (#2784, 感謝 @zhaomoran); スキル同期のコピーフォールバックも修正しました (#2791, 感謝 @rogerdigital)。
+
+#### Usage 価格入力の精度
+
+価格入力のステップを 0.0001 に下げ、DeepSeek のキャッシュ読み取りのような 1 セント未満のコストも入力できるようにしました (#2793, #2503 をクローズ, 感謝 @rogerdigital)。
+
+#### Ghostty のクリーンウィンドウ起動
+
+Ghostty は既存タブを複製する代わりに単一のクリーンウィンドウを開くようになり、他のターミナルは `open -na` 経由で新しいウィンドウを開きます (#2801, #2798 をクローズ, 感謝 @luw2007)。
+
+#### ツールバージョンと更新の信頼性
+
+バージョンプローブが実行できないインストールを覆い隠さなくなり、プレリリースツールがバージョンチェックで正しく扱われ、バッチ更新がツール単位で実行され、インストール / 更新ボタンがプリフライト中ロックされ続け、アンカー型アップグレードブランチが絶対パスを強制し、WSL のインストーラーパスが必要に応じてネイティブ Unix インストーラーを使用するようになりました。
+
+#### Codex の mise 検出
+
+Codex の mise 環境検出を修正しました (#2822, 感謝 @iambinlin)。
+
+#### Codex のアーカイブ済みセッション
+
+Codex のアーカイブ済みセッションがセッション検出に含まれるようになりました (#2861, 感謝 @nanmen2)。
+
+#### Codex Chat の空ツール引数
+
+空のツール呼び出し引数ペイロードが Codex Chat 変換時に `{}` に強制変換され、上流とクライアントが有効な JSON を受け取るようになりました。
+
+#### Claude プロバイダーの deeplink インポート
+
+deeplink 経由で Claude プロバイダーをインポートする際に、カスタム環境フィールドが保持されるようになりました (#2928, 感謝 @doutuifei)。
+
+#### OMO 推奨モデル
+
+OMO の推奨モデルを上流のデフォルトと同期し、「推奨を入力」のフィードバックを改善しました。
+
+#### ShengSuanYun のモデル ID にルーティング用プレフィックスを付与
+
+ShengSuanYun（胜算云）プリセットが、上流ゲートウェイが要求するベンダープレフィックス —— `anthropic/…`、`google/…`、`openai/…`（例: `anthropic/claude-sonnet-4.6`、`google/gemini-3.1-pro-preview`）—— を、Claude Code、Claude Desktop、Codex、Gemini、OpenCode、OpenClaw の各プリセットにわたって持つようになりました。Claude Code のルーティング環境変数（`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_{HAIKU,SONNET,OPUS}_MODEL`）も含まれるため、ルーティングに失敗するのではなく有効な上流モデルに解決されます。
+
+#### ClaudeAPI モデルテストの再有効化
+
+ClaudeAPI プリセット（Claude Code と Claude Desktop）を `third_party` から `aggregator` に再分類し、サードパーティ Claude ゲートによってモデルテストボタンが無効化されないようにしました; パートナースターは `isPartner` によって駆動され、category には依存しないため影響を受けません。
+
+#### バージョン情報のバージョンチェック
+
+バージョンチェックがプレリリースのツールバージョンを、更新状態を誤分類することなく扱えるようになりました。
+
+#### App スイッチャーのテキスト切れ
+
+App スイッチャーのテキストを切り取っていた固定幅の制約を削除しました (#3161, 感謝 @loocor)。
+
+#### useEffect の競合状態
+
+App.tsx の effects に active フラグのパターンを追加してアンマウント時のリスナーリークを防止し、localStorage に `undefined` の言語を保存しないようガードしました (#2827, 感謝 @Zylo206)。
+
+### 削除
+
+#### LionCC スポンサーとプリセット
+
+LionCC スポンサーエントリと LionCCAPI プリセットを、各 README、プロバイダー設定、ロケールにわたって削除しました（アイコンアセットは保持）。
+
+#### AICoding パートナーエントリ
+
+AICoding パートナーを README スポンサー一覧、プロバイダープリセット、i18n メタデータから削除しました。
+
+#### Kimi For Coding の Codex プリセット
+
+Kimi For Coding プリセットを Codex プリセットカタログから削除しました。
+
+#### CLI アンインストールコマンドのヒント
+
+ツール管理 UI から生成された CLI アンインストールコマンドのヒントを削除しつつ、競合診断は引き続き表示します。
+
+### ドキュメント
+
+#### Codex Chat プロバイダーサポート
+
+Chat Completions ルーティング、プロバイダーサポート、推論の自動判別、ローカルルーティングのガイダンスを changelog とユーザーマニュアルにドキュメント化しました。
+
+#### 設定マニュアルのリフレッシュ
+
+新しい受託ツールライフサイクルと Hermes インストーラーの挙動について、設定ドキュメントを更新しました。
+
+#### Claude Desktop ガイド
+
+プロバイダー設定、インポート、モデルマッピング、ローカルルーティングのコンテキストについて、ローカライズされた Claude Desktop ガイドページとスクリーンショットを追加しました。
+
+#### インストールドキュメント
+
+公式 Homebrew cask を推奨するようインストールドキュメントと README を更新し、v3.15.0 リリースノートの偽サイト警告の文言を各ロケールでリフレッシュしました。
+
+### ⚠️ アップグレード時の注意
+
+#### Codex 履歴の一回限りのマイグレーション
+
+アップグレード後の初回起動で、Codex 履歴の一回限りのマイグレーションが実行されます: サードパーティプロバイダーが `custom` バケットに正規化され、過去の JSONL セッションと `state_5.sqlite` スレッドテーブルが書き換えられます。オリジナルは `~/.cc-switch/backups/codex-history-provider-migration-v1/` 配下にバックアップされます。このステップは「プロバイダー切り替え後に過去のセッションが消える」問題を修正するもので、マイグレーション後は履歴が正しく復元されます。
+
+#### Codex のカタログ変更には再起動が必要
+
+Codex は `model_catalog_json` を起動時に読み込むため、CC Switch でモデルマッピングテーブルを編集した後は、新しいカタログを反映させるために **Codex を再起動**する必要があります。
+
+#### Chat ルーティングのプロバイダーでは推論 effort が効かない場合がある
+
+思考の オン / オフ スイッチしか公開しないプロバイダー（Kimi、GLM、Qwen、MiniMax、MiMo、SiliconFlow）では、Codex で推論 effort（`model_reasoning_effort`: low / medium / high）を変更しても**効果がありません** —— CC Switch は未対応の effort フィールドをこれらに転送しません。本物の effort 階層を持つプロバイダー（DeepSeek、OpenRouter、および StepFun の `step-3.5-flash-2603` のみ）でのみ、レベルが実際に反映されます。
+
+#### デフォルトモデルが Opus 4.8 / GPT-5.5 にアップグレード
+
+デフォルトの Claude Opus モデルラインが 4.8 に、該当箇所の GPT デフォルトが 5.5 にアップグレードされました。固定した古いデフォルトモデルに依存している場合は、アップグレード後に該当プリセット / テンプレートのモデルフィールドを確認してください。
+
+### ⚠️ リスク通知
+
+本リリースは、リバースプロキシ系機能について v3.12.3 / v3.13.0 / v3.15.0 で提起されたリスク通知を継承します。
+
+**GitHub Copilot リバースプロキシ**: Copilot のリバースプロキシパスを使用すると、GitHub / Microsoft の利用規約に違反する可能性があります。詳細は [v3.12.3 リリースノート](v3.12.3-ja.md#️-リスクに関する注意事項) を参照してください。
+
+**Codex OAuth リバースプロキシ**: ChatGPT サブスクリプションを使用した Codex OAuth リバースプロキシは、OpenAI の利用規約に違反する可能性があります。詳細は [v3.13.0 リリースノート](v3.13.0-ja.md#️-リスクに関する注意事項) を参照してください。
+
+**Codex サードパーティプロバイダー Chat ルーティング**: CC Switch のローカルプロキシ経由で Codex のリクエストを変換し、サードパーティプロバイダーに転送する際、各プロバイダーの課金、コンプライアンス、データ保持に関する制約はそれぞれ異なります。利用前にターゲットプロバイダーの利用規約をお読みください。
+
+**Claude Desktop サードパーティプロバイダーのプロキシ切り替え**: CC Switch 内蔵プロキシゲートウェイ経由で Claude Desktop のリクエストをサードパーティプロバイダーに転送する際、サードパーティプロバイダーの課金、コンプライアンス、データ保持に関する制約はそれぞれ異なります。利用前にターゲットプロバイダーの利用規約をお読みください。
+
+ユーザーが上記機能を有効化することで、**すべてのリスクを自己責任で**受諾したものとみなされます。CC Switch は、これらの機能の使用に起因するアカウントの制限、警告、サービス停止について一切の責任を負いません。
+
+### ダウンロード・インストール
+
+[Releases](https://github.com/farion1231/cc-switch/releases/latest) から対応バージョンをダウンロードしてください。
+
+#### システム要件
+
+| OS      | 最小バージョン           | アーキテクチャ                      |
+| ------- | ------------------------ | ----------------------------------- |
+| Windows | Windows 10 以降          | x64                                 |
+| macOS   | macOS 12 (Monterey) 以降 | Intel (x64) / Apple Silicon (arm64) |
+| Linux   | 下表参照                 | x64 / ARM64                         |
+
+#### Windows
+
+| ファイル                                 | 説明                                        |
+| ---------------------------------------- | ------------------------------------------- |
+| `CC-Switch-v3.16.0-Windows.msi`          | **推奨** - MSI インストーラー、自動更新対応 |
+| `CC-Switch-v3.16.0-Windows-Portable.zip` | ポータブル版、解凍して実行、レジストリ不要  |
+
+#### macOS
+
+| ファイル                         | 説明                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| `CC-Switch-v3.16.0-macOS.dmg`    | **推奨** - DMG インストーラー、Applications にドラッグ |
+| `CC-Switch-v3.16.0-macOS.zip`    | 解凍して Applications にドラッグ、Universal Binary     |
+| `CC-Switch-v3.16.0-macOS.tar.gz` | Homebrew インストールと自動更新用                      |
+
+> macOS 版は Apple のコード署名および公証済みで、直接インストールして使用できます。
+
+#### Homebrew（macOS）
+
+> 🎉 CC Switch は Homebrew 公式 cask リポジトリに収録されました。カスタム tap の追加は不要です！
+
+```bash
+brew install --cask cc-switch
+```
+
+更新:
+
+```bash
+brew upgrade --cask cc-switch
+```
+
+#### Linux
+
+> Linux 向けの成果物は **x86_64** と **ARM64**（`aarch64`）の両方が提供されます。ファイル名にアーキテクチャ識別子が含まれているため、`uname -m` の出力に応じて選択してください：
+>
+> - `CC-Switch-v3.16.0-Linux-x86_64.AppImage` / `.deb` / `.rpm`
+> - `CC-Switch-v3.16.0-Linux-arm64.AppImage` / `.deb` / `.rpm`
+
+| ディストリビューション                  | 推奨形式    | インストール方法                                                           |
+| --------------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| Ubuntu / Debian / Linux Mint / Pop!\_OS | `.deb`      | `sudo dpkg -i CC-Switch-*.deb` または `sudo apt install ./CC-Switch-*.deb` |
+| Fedora / RHEL / CentOS / Rocky Linux    | `.rpm`      | `sudo rpm -i CC-Switch-*.rpm` または `sudo dnf install ./CC-Switch-*.rpm`  |
+| openSUSE                                | `.rpm`      | `sudo zypper install ./CC-Switch-*.rpm`                                    |
+| Arch Linux / Manjaro                    | `.AppImage` | 実行権限を付与して実行、または AUR を使用                                  |
+| その他のディストリビューション / 不明   | `.AppImage` | `chmod +x CC-Switch-*.AppImage && ./CC-Switch-*.AppImage`                  |
+
 ## [3.15.0] - 2026-05-16
 
 > Claude Desktop が一等管理パネルに昇格（プロキシゲートウェイ経由のサードパーティプロバイダー切り替えを含む）、ロールベースのモデルマッピング、リバースプロキシの大幅強化、Codex OAuth ライブモデル検出、Usage ダッシュボードのフィルター駆動 Hero カード
