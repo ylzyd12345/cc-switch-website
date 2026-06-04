@@ -36,6 +36,11 @@ export function TutorialCard({ tutorial }: TutorialCardProps) {
 
   const accent = tutorial.accent ?? 'blue';
   const coverGradient = accentClass[accent];
+  const coverIcons = tutorial.coverIcons;
+  const hasIconGroup = Boolean(coverIcons);
+  const iconGroupClass = coverIcons && coverIcons.length > 2 ? 'gap-2' : 'gap-3';
+  const iconFrameClass = coverIcons && coverIcons.length > 2 ? 'h-12 w-12' : 'h-14 w-14';
+  const iconImageClass = coverIcons && coverIcons.length > 2 ? 'h-7 w-7' : 'h-8 w-8';
 
   const innerContent = (
     <>
@@ -46,7 +51,28 @@ export function TutorialCard({ tutorial }: TutorialCardProps) {
           coverGradient,
         )}
       >
-        <span className="text-5xl">{tutorial.emoji ?? '📘'}</span>
+        {hasIconGroup && coverIcons ? (
+          <div className={cn('flex items-center', iconGroupClass)}>
+            {coverIcons.map((icon, index) => (
+              <span
+                key={`${icon.alt}-${index}`}
+                className={cn(
+                  'flex items-center justify-center rounded-full border border-border/60 bg-white/95 shadow-sm backdrop-blur',
+                  iconFrameClass,
+                )}
+              >
+                <img
+                  src={icon.src}
+                  alt={icon.alt}
+                  className={cn('object-contain dark:[filter:none]', iconImageClass)}
+                  loading="lazy"
+                />
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-5xl">{tutorial.emoji ?? '📘'}</span>
+        )}
         <div className="absolute left-3 top-3 flex items-center gap-1.5">
           <span
             className={cn(

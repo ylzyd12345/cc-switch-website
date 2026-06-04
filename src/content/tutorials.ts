@@ -17,6 +17,11 @@ export interface TutorialAuthor {
   url?: string;
 }
 
+export interface TutorialCoverIcon {
+  src: string;
+  alt: string;
+}
+
 export interface Tutorial {
   /** URL slug. Also the markdown filename for in-site articles. */
   slug: string;
@@ -38,12 +43,67 @@ export interface Tutorial {
   languages?: Language[];
   /** Optional accent color token for the card cover. */
   accent?: 'blue' | 'purple' | 'amber' | 'emerald' | 'rose';
+  /** Optional icon pair/group shown on the card cover. */
+  coverIcons?: TutorialCoverIcon[];
   /** Optional emoji shown on the card cover when no image is provided. */
   emoji?: string;
   featured?: boolean;
 }
 
+const tutorialIcons = {
+  ccSwitch: { src: '/docs/assets/tutorial-icons/cc-switch.png', alt: 'CC Switch' },
+  claude: { src: '/docs/assets/tutorial-icons/claude.svg', alt: 'Claude' },
+  codex: { src: '/docs/assets/tutorial-icons/codex.svg', alt: 'Codex' },
+  deepseek: { src: '/docs/assets/tutorial-icons/deepseek.svg', alt: 'DeepSeek' },
+  kimi: { src: '/docs/assets/tutorial-icons/kimi.svg', alt: 'Kimi' },
+  minimax: { src: '/docs/assets/tutorial-icons/minimax.svg', alt: 'MiniMax' },
+  siliconflow: { src: '/docs/assets/tutorial-icons/siliconflow.svg', alt: 'SiliconFlow' },
+  zhipu: { src: '/docs/assets/tutorial-icons/zhipu.svg', alt: 'Zhipu GLM' },
+} satisfies Record<string, TutorialCoverIcon>;
+
 export const tutorials: Tutorial[] = [
+  {
+    slug: 'codex-official-auth-preservation-guide',
+    title: {
+      zh: '使用第三方 API 时保留 Codex 远程操作和官方插件',
+      en: 'Keep Codex Remote Control and Official Plugins with Third-party APIs',
+      ja: 'サードパーティ API 利用時に Codex の公式機能を保持する',
+    },
+    summary: {
+      zh: '官方配置攻略：先完成 Codex 官方登录，再开启 Codex 应用增强，让官方登录态留在 auth.json，同时把模型流量切到 DeepSeek、Kimi、GLM、MiniMax 等第三方 API。',
+      en: 'Official setup guide for signing in to Codex first, enabling Codex App Enhancements, preserving official auth.json state, and routing model traffic to third-party APIs such as DeepSeek, Kimi, GLM, and MiniMax.',
+      ja: 'Codex に公式ログインしたあと Codex アプリ拡張を有効化し、auth.json の公式ログイン状態を保持しながら、モデル通信を DeepSeek / Kimi / GLM / MiniMax などのサードパーティ API に切り替える公式ガイドです。',
+    },
+    author: { name: 'CC Switch Team', url: 'https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-official-auth-preservation-guide-zh.md' },
+    date: '2026-06-01',
+    category: 'practice',
+    source: 'official',
+    readMinutes: 9,
+    accent: 'blue',
+    coverIcons: [tutorialIcons.codex, tutorialIcons.ccSwitch],
+    featured: true,
+  },
+  {
+    slug: 'codex-deepseek-routing-guide',
+    title: {
+      zh: '在 Codex 中使用 DeepSeek：本地路由实战攻略',
+      en: 'Use DeepSeek in Codex with Local Routing',
+      ja: 'Codex で DeepSeek を使う: ローカルルーティング実践ガイド',
+    },
+    summary: {
+      zh: '官方实战攻略：以 DeepSeek 这类 OpenAI Chat Completions 供应商为例，演示添加 Codex 供应商、开启本地路由、接管 Codex 和验证请求转发。',
+      en: 'Official hands-on guide using DeepSeek-style OpenAI Chat Completions providers to add a Codex provider, enable Local Routing, take over Codex, and verify request forwarding.',
+      ja: 'DeepSeek のような OpenAI Chat Completions 形式のプロバイダーを例に、Codex プロバイダーの追加、ローカルルーティング、Codex ルーティング有効化、転送確認までを説明する公式実践ガイドです。',
+    },
+    author: { name: 'CC Switch Team', url: 'https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-zh.md' },
+    date: '2026-05-29',
+    category: 'practice',
+    source: 'official',
+    readMinutes: 6,
+    accent: 'amber',
+    coverIcons: [tutorialIcons.deepseek, tutorialIcons.codex],
+    featured: true,
+  },
   {
     slug: 'claude-desktop-provider-management',
     title: {
@@ -63,7 +123,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 3,
     externalUrl: 'https://x.com/Jason_Young1231/status/2055610762257949105',
     accent: 'blue',
-    emoji: '🧰',
+    coverIcons: [tutorialIcons.claude, tutorialIcons.ccSwitch],
     featured: true,
   },
   {
@@ -85,7 +145,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 11,
     languages: ['zh'],
     accent: 'amber',
-    emoji: '🔀',
+    coverIcons: [tutorialIcons.codex, tutorialIcons.claude],
     featured: true,
   },
   {
@@ -107,7 +167,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 15,
     externalUrl: 'https://x.com/Khazix0918/article/2048983462942789978',
     accent: 'emerald',
-    emoji: '🧭',
+    coverIcons: [tutorialIcons.ccSwitch, tutorialIcons.claude, tutorialIcons.codex],
     featured: true,
   },
   {
@@ -129,7 +189,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 8,
     externalUrl: 'https://docs.siliconflow.cn/cn/usercases/use-siliconcloud-in-ccswitch',
     accent: 'purple',
-    emoji: '☁️',
+    coverIcons: [tutorialIcons.siliconflow, tutorialIcons.ccSwitch],
     featured: true,
   },
   {
@@ -151,7 +211,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 14,
     externalUrl: 'https://platform.minimaxi.com/docs/guides/text-ai-coding-tools',
     accent: 'rose',
-    emoji: '⚡',
+    coverIcons: [tutorialIcons.minimax, tutorialIcons.claude, tutorialIcons.codex],
     featured: true,
   },
   {
@@ -173,7 +233,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 10,
     externalUrl: 'https://www.bilibili.com/video/BV1pQRNBsEGs/',
     accent: 'emerald',
-    emoji: '🎬',
+    coverIcons: [tutorialIcons.deepseek, tutorialIcons.claude],
     featured: true,
   },
   {
@@ -195,7 +255,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 8,
     externalUrl: 'https://x.com/yinmin1987/article/2031182350433059032',
     accent: 'purple',
-    emoji: '🧩',
+    coverIcons: [tutorialIcons.claude, tutorialIcons.kimi, tutorialIcons.zhipu],
     featured: true,
   },
   {
@@ -217,7 +277,7 @@ export const tutorials: Tutorial[] = [
     readMinutes: 2,
     externalUrl: 'https://x.com/Jason_Young1231/status/2015038067149799924',
     accent: 'blue',
-    emoji: '🖥️',
+    coverIcons: [tutorialIcons.claude, tutorialIcons.ccSwitch],
     featured: true,
   },
   {
@@ -239,7 +299,10 @@ export const tutorials: Tutorial[] = [
     readMinutes: 3,
     externalUrl: 'https://x.com/Jason_Young1231/status/1986363241791205435',
     accent: 'blue',
-    emoji: '🔁',
+    coverIcons: [
+      { ...tutorialIcons.codex, alt: 'Codex account 1' },
+      { ...tutorialIcons.codex, alt: 'Codex account 2' },
+    ],
     featured: true,
   },
 ];
