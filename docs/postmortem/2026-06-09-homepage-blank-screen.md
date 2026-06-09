@@ -66,19 +66,21 @@ https://ccswitch.io/assets/CCSwitchHome-16SBFQob.js
 
 以下均已写入工作区并通过本地 `npm run check`(lint + typecheck + build,`exit 0`):
 
-1. **`public/_redirects`** 移除全局 `/* /index.html 200` 兜底,改为只对真实客户端路由 rewrite 到 `index.html`:
+1. **`public/_redirects`** 移除全局 `/* /index.html 200` 兜底,改为只对真实客户端路由 rewrite 到根文档 `/`:
 
    ```
-   /zh  /index.html  200
-   /zh/*  /index.html  200
-   /en  /index.html  200
-   /en/*  /index.html  200
-   /ja  /index.html  200
-   /ja/*  /index.html  200
-   /docs  /index.html  200
-   /changelog/*  /index.html  200
-   /tutorials/*  /index.html  200
+   /zh  /  200
+   /zh/*  /  200
+   /en  /  200
+   /en/*  /  200
+   /ja  /  200
+   /ja/*  /  200
+   /docs  /  200
+   /changelog/*  /  200
+   /tutorials/*  /  200
    ```
+
+   这里不用 `/index.html` 作为 rewrite 目标,因为 Cloudflare Pages 会把直接访问 `/index.html` 规范化成 `/`,容易产生额外 308 跳转。
 
    这样 `/assets/*.js`、`/docs/<lang>/**/*.md` 等静态资源不会再被 SPA 兜底规则劫持。缺失资源返回真正的 404,而不是 200 HTML。
 

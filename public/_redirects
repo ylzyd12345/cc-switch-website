@@ -4,23 +4,23 @@
 
 # SPA route rewrites. Keep these scoped to real client routes so missing
 # static files such as /assets/*.js return a real 404 instead of index.html.
-/zh  /index.html  200
-/zh/  /index.html  200
-/zh/*  /index.html  200
-/en  /index.html  200
-/en/  /index.html  200
-/en/*  /index.html  200
-/ja  /index.html  200
-/ja/  /index.html  200
-/ja/*  /index.html  200
+/zh  /  200
+/zh/  /  200
+/zh/*  /  200
+/en  /  200
+/en/  /  200
+/en/*  /  200
+/ja  /  200
+/ja/  /  200
+/ja/*  /  200
 
-/docs  /index.html  200
-/docs/  /index.html  200
-/changelog  /index.html  200
-/changelog/  /index.html  200
-/changelog/*  /index.html  200
-/sponsors  /index.html  200
-/sponsors/  /index.html  200
-/tutorials  /index.html  200
-/tutorials/  /index.html  200
-/tutorials/*  /index.html  200
+/docs  /  200
+/docs/  /  200
+/changelog  /  200
+/changelog/  /  200
+/changelog/*  /  200
+/sponsors  /  200
+/sponsors/  /  200
+/tutorials  /  200
+/tutorials/  /  200
+/tutorials/*  /  200
